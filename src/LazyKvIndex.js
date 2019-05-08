@@ -49,7 +49,12 @@ class LazyKvIndex {
   async get(key) {
 
     try {
-      let fileContents = await this.ipfs.files.read(this._getPathToKey(key))
+      let path = this._getPathToKey(key)
+
+      //This will throw an exception if the file doesn't exist. 
+      await this.ipfs.files.stat(path, { hash: true})
+
+      let fileContents = await this.ipfs.files.read(path)
 
       let result = JSON.parse(fileContents.toString())
 
