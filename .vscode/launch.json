@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "tests",
+            "type": "node",
+            "protocol": "inspector",
+            "request": "launch",
+            "runtimeArgs": [
+                "${workspaceRoot}/node_modules/.bin/mocha",
+                "--inspect-brk",
+                "test/**/*.js",
+              ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "port": 9229
+        }
+    ]
+
+}

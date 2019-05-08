@@ -1,31 +1,37 @@
 {
-  "name": "orbit-db-kvstore",
-  "version": "1.5.0-rc3",
-  "description": "Key-Value Store for orbit-db",
-  "main": "src/KeyValueStore.js",
-  "homepage":"https://github.com/orbitdb/orbit-db-kvstore",
-  "bugs":"https://github.com/orbitdb/orbit-db-kvstore/issues",
+  "name": "orbit-db-lazykv",
+  "version": "1.0.0",
+  "description": "A lazily loaded key-value Store for orbit-db",
+  "main": "src/LazyKvStore.js",
+  "homepage": "https://github.com/ptoner/orbit-db-lazykv",
+  "bugs": "https://github.com/ptoner/orbit-db-lazykv/issues",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
-  "keywords":[
+  "keywords": [
     "orbit-db",
     "orbitdb",
     "kv",
     "key-value",
     "kv-store"
   ],
-  "author": "Haad",
-  "contributors":[
+  "author": "ptoner",
+  "contributors": [
     "haadcode",
     "greenkeeperio-bot",
     "shamb0t",
     "RichardLitt",
     "bshevchenko",
-    "adam-palazzo"
+    "adam-palazzo",
+    "ptoner"
   ],
   "license": "MIT",
   "dependencies": {
-    "orbit-db-store": "next"
+    "orbit-db-store": "next",
+    "mocha": "6.1.4"
+  },
+  "devDependencies": {
+    "orbit-db": "file:../orbit-db",
+    "ipfs-http-client": "30.1.4"
   }
 }
