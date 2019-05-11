@@ -68,23 +68,101 @@ class LazyKvIndex {
   }
 
 
+
+  /**
+   * Optionally we can be given a map full of tags to apply to this value.
+   * We'll create a folder structure out of them. It supports both single values
+   * and arrays.
+   * 
+   * Create an attribute named _tags.
+   * 
+   * Example:
+   * db.put(22, {
+   *   name: "Andrew McCutchen",
+   *   _tags: {
+   *      seasons: [2019, 2018, 2017],
+   *      currentTeam: "PIT",
+   *      battingHand: "R",
+   *      throwingHand: "L",
+   *      
+   *   }
+   * })
+   * 
+   * 
+   * This will create the following files and folder structure
+   * 
+   * database_name/22
+   * database_name/tags/seasons/2019/22
+   * database_name/tags/seasons/2018/22
+   * database_name/tags/seasons/2017/22
+   * database_name/tags/currentTeam/PIT/22
+   * database_name/tags/battingHand/R/22
+   * database_name/tags/throwingHand/L/22
+   * 
+  */
   async put(key, value) {
 
-    let path = this._getPathToKey(key)
+    let primaryPath = this._getPathToKey(key)
+
+
+    //Check if there are any existing tags and remove them.
+    let existing = await this.get(key)
+    
+    if (existing) {
+      await this._removeTagPaths(key, existing)
+    }
+
+
+    let promises = []
+
+    //Write to primary path
+    const buffer = Buffer.from(JSON.stringify(value))
+    promises.push(this._writeToPath(buffer, key, primaryPath))
+
+
+    //Copy to tag paths
+    let tagPaths = this._getTagPaths(value._tags)
+    promises = promises.concat(this._copyToTagPaths(primaryPath, key, tagPaths))
+
+    return Promise.all(promises)
+
+  }
+
+  async _writeToPath(buffer, key, path) {
 
     console.log(`Writing key ${key} to ${path}`)
-
-    const buffer = Buffer.from(JSON.stringify(value))
-
-
-    return this.ipfs.files.write(path, buffer, {
-      create: true,
-      parents: true,
+    return this.ipfs.files.write( path, buffer, {
+      create: true, 
+      parents: true, 
       truncate: true
     })
 
-
   }
+
+  async _copyToTagPaths(primaryPath, key, tagPaths) {
+
+    let promises = []
+
+    for (let tagPath of tagPaths) {
+      console.log(`Tag: Writing key ${key} to ${tagPath}`)
+      promises.push(this.ipfs.files.mkdir(tagPath, {
+          parents: true,
+          create: true
+        })
+      )
+      promises.push(this.ipfs.files.cp(primaryPath, tagPath + '/' + key, { 
+          parents: true,
+          create: true,
+          truncate: true 
+        })
+      )
+    }
+
+    return promises
+  }
+
+
+
 
 
   async reset() {
@@ -95,9 +173,46 @@ class LazyKvIndex {
     }
   }
 
+
+  async _removeTagPaths(key, existing) {
+
+    let existingTagPaths = this._getTagPaths(existing._tags)
+      
+    for (let tagPath of existingTagPaths) {
+      console.log(`Tag: Removing key ${key} from ${tagPath}`)
+      await this.ipfs.files.rm(tagPath + '/' + key)
+    }
+
+  }
+
+  _getTagPaths(tags) {
+
+    let tagPaths = []
+
+    if (tags) {
+      for (var tagKey in tags) {
+        let tagValue = tags[tagKey]
+  
+        if (Array.isArray(tagValue)) {
+          for (let arrayTagValue of tagValue) {
+            tagPaths.push(`${this.dbname}/tags/${tagKey}/${arrayTagValue}`)
+          }
+        } else {
+         //Single value
+          tagPaths.push(`${this.dbname}/tags/${tagKey}/${tagValue}`)
+        }
+      }
+    }
+
+    return tagPaths
+  }
+
   _getPathToKey(key) {
     return `${this.dbname}/${key}`
   }
+
+
+
 }
 
 module.exports = LazyKvIndex

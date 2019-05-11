@@ -27,26 +27,7 @@ describe('LazyKvStore', async () => {
         store = await orbitdb.open("testlazykv", {create: true, type: "lazykv"})
     })
 
-    it('Test put', async () => {
-
-        //Arrange
-        const obj = {
-            name: "Pat"
-        }
-
-        //Act
-        await store.put(1, obj)
-
-
-        //Assert
-        let read = await store.get(1)
-
-        assert.equal(read.name, "Pat")
-
-    })
-
-
-    it('Test all', async () => {
+    it('Test put/get', async () => {
 
         //Arrange 
         await store.put(1, {
@@ -74,8 +55,6 @@ describe('LazyKvStore', async () => {
         let susan = await store.get(4)
 
 
-
-
         //Assert
         assert.equal(pat.name, "Pat")
         assert.equal(bill.name, "Bill")
@@ -87,13 +66,26 @@ describe('LazyKvStore', async () => {
 
 
 
-    it('Test del', async () => {
+    it('Test _tag', async () => {
 
         //Arrange 
+        await store.put(5, {
+            name: "Andrew McCutchen",
+            _tags: {
+                seasons: [2019, 2018, 2017],
+                currentTeam: "PIT",
+                battingHand: "R",
+                throwingHand: "L"
+            }
+        })
+
 
         //Act
+        let fetched = await store.get(5)
+
 
         //Assert
+        console.log(fetched)
 
     })
 
