@@ -69,6 +69,10 @@ class LazyKvStore extends Store {
     return 'lazykv'
   }
 
+  async getByTag(tag, value, limit, offset ) {
+    return this._index.getByTag(tag, value, limit, offset)
+  }
+
 
   async _updateIndex () {
     this._recalculateReplicationMax()

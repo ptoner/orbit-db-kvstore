@@ -8,8 +8,9 @@
             "runtimeArgs": [
                 "${workspaceRoot}/node_modules/.bin/mocha",
                 "--inspect-brk",
-                "--timeout 10000",
                 "test/**/*.js",
+                "-t", 
+                "100000", 
               ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",

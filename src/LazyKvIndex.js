@@ -128,9 +128,39 @@ class LazyKvIndex {
 
   }
 
+  async getByTag(tag, value, limit, offset ) {
+
+    let results = []
+
+    let path = this._getTagPath(tag, value)
+
+    let files = await this.ipfs.files.ls(path)
+
+    let counter = 0
+    for (let file of files) {
+
+      if (counter >= offset) {
+
+        let fileContents = await this.ipfs.files.read(`${path}/${file.name}`)
+
+        let result = JSON.parse(fileContents.toString())
+        results.push(result)
+      }
+      if (results.length == limit) break
+
+      counter++
+    }
+
+    return results
+
+
+  }
+
+
+
   async _writeToPath(buffer, key, path) {
 
-    console.log(`Writing key ${key} to ${path}`)
+    // console.log(`Writing key ${key} to ${path}`)
     return this.ipfs.files.write( path, buffer, {
       create: true, 
       parents: true, 
@@ -144,12 +174,11 @@ class LazyKvIndex {
     let promises = []
 
     for (let tagPath of tagPaths) {
-      console.log(`Tag: Writing key ${key} to ${tagPath}`)
-      promises.push(this.ipfs.files.mkdir(tagPath, {
-          parents: true,
-          create: true
-        })
-      )
+      // console.log(`Tag: Writing key ${key} to ${tagPath}`)
+      
+      await this._createTagPath(tagPath)
+      
+
       promises.push(this.ipfs.files.cp(primaryPath, tagPath + '/' + key, { 
           parents: true,
           create: true,
@@ -161,8 +190,17 @@ class LazyKvIndex {
     return promises
   }
 
+  async _createTagPath(tagPath) {
 
+    if (await this._pathExists(tagPath)) return
 
+    console.log(`Creating ${tagPath}`)
+
+    return this.ipfs.files.mkdir(tagPath, {
+      parents: true,
+      create: true
+    })
+  }
 
 
   async reset() {
@@ -179,10 +217,24 @@ class LazyKvIndex {
     let existingTagPaths = this._getTagPaths(existing._tags)
       
     for (let tagPath of existingTagPaths) {
-      console.log(`Tag: Removing key ${key} from ${tagPath}`)
-      await this.ipfs.files.rm(tagPath + '/' + key)
+      // console.log(`Tag: Removing key ${key} from ${tagPath}`)
+      if (await this._pathExists(tagPath + '/' + key)) {
+        await this.ipfs.files.rm(tagPath + '/' + key)
+      }
     }
 
+  }
+
+  async _pathExists(path) {
+
+    let exists = false
+
+    try {
+      await this.ipfs.files.stat(path)
+      exists = true
+    } catch(ex) {}
+
+    return exists
   }
 
   _getTagPaths(tags) {
@@ -195,17 +247,23 @@ class LazyKvIndex {
   
         if (Array.isArray(tagValue)) {
           for (let arrayTagValue of tagValue) {
-            tagPaths.push(`${this.dbname}/tags/${tagKey}/${arrayTagValue}`)
+            tagPaths.push(this._getTagPath(tagKey, arrayTagValue))
           }
         } else {
          //Single value
-          tagPaths.push(`${this.dbname}/tags/${tagKey}/${tagValue}`)
+          tagPaths.push(this._getTagPath(tagKey, tagValue))
         }
       }
     }
 
     return tagPaths
   }
+
+  _getTagPath(tagKey, tagValue) {
+    return `${this.dbname}/tags/${tagKey}/${tagValue}`
+  }
+
+
 
   _getPathToKey(key) {
     return `${this.dbname}/${key}`
