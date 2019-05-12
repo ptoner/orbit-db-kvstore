@@ -48,19 +48,17 @@ class LazyKvIndex {
 
   async get(key) {
 
-    try {
-      let path = this._getPathToKey(key)
+    let path = this._getPathToKey(key)
 
-      //This will throw an exception if the file doesn't exist. 
-      await this.ipfs.files.stat(path, { hash: true})
+    let exists = await this._pathExists(path)
+
+    if (exists) {
 
       let fileContents = await this.ipfs.files.read(path)
 
       let result = JSON.parse(fileContents.toString())
 
       return result
-    } catch (ex) {
-      return null
     }
 
 
@@ -149,7 +147,6 @@ class LazyKvIndex {
       if (counter >= offset) {
 
         let filePath = `${path}/${file.name}`
-        console.log(`Reading ${filePath}`)
 
         let fileContents = await this.ipfs.files.read(filePath)
 
