@@ -27,7 +27,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "orbit-db-store": "next",
+    "orbit-db-store": "2.6.1",
     "mocha": "6.1.4"
   },
   "devDependencies": {

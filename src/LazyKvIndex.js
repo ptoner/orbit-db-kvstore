@@ -60,10 +60,9 @@ class LazyKvIndex {
 
       return result
     } catch (ex) {
-      // console.log(ex)
+      return null
     }
 
-    return null
 
   }
 
@@ -119,7 +118,6 @@ class LazyKvIndex {
     const buffer = Buffer.from(JSON.stringify(value))
     promises.push(this._writeToPath(buffer, key, primaryPath))
 
-
     //Copy to tag paths
     let tagPaths = this._getTagPaths(value._tags)
     promises = promises.concat(this._copyToTagPaths(primaryPath, key, tagPaths))
@@ -134,16 +132,29 @@ class LazyKvIndex {
 
     let path = this._getTagPath(tag, value)
 
+    //If there isn't even a folder just return an empty array
+    let exists = await this._pathExists(path)
+    if (!exists) {
+      return []
+    }
+
+    
+
     let files = await this.ipfs.files.ls(path)
+    
 
     let counter = 0
     for (let file of files) {
 
       if (counter >= offset) {
 
-        let fileContents = await this.ipfs.files.read(`${path}/${file.name}`)
+        let filePath = `${path}/${file.name}`
+        console.log(`Reading ${filePath}`)
+
+        let fileContents = await this.ipfs.files.read(filePath)
 
         let result = JSON.parse(fileContents.toString())
+
         results.push(result)
       }
       if (results.length == limit) break
@@ -194,7 +205,7 @@ class LazyKvIndex {
 
     if (await this._pathExists(tagPath)) return
 
-    console.log(`Creating ${tagPath}`)
+    // console.log(`Creating ${tagPath}`)
 
     return this.ipfs.files.mkdir(tagPath, {
       parents: true,
@@ -238,7 +249,6 @@ class LazyKvIndex {
   }
 
   _getTagPaths(tags) {
-
     let tagPaths = []
 
     if (tags) {
