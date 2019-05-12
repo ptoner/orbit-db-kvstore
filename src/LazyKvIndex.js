@@ -117,7 +117,7 @@ class LazyKvIndex {
     promises.push(this._writeToPath(buffer, key, primaryPath))
 
     //Copy to tag paths
-    let tagPaths = this._getTagPaths(value._tags)
+    let tagPaths = this._getTagPaths(value)
     promises = promises.concat(this._copyToTagPaths(primaryPath, key, tagPaths))
 
     return Promise.all(promises)
@@ -222,7 +222,7 @@ class LazyKvIndex {
 
   async _removeTagPaths(key, existing) {
 
-    let existingTagPaths = this._getTagPaths(existing._tags)
+    let existingTagPaths = this._getTagPaths(existing)
       
     for (let tagPath of existingTagPaths) {
       // console.log(`Tag: Removing key ${key} from ${tagPath}`)
@@ -238,20 +238,23 @@ class LazyKvIndex {
     let exists = false
 
     try {
-      await this.ipfs.files.stat(path)
+      let hash = await this.ipfs.files.stat(path, {hash: true})
       exists = true
     } catch(ex) {}
 
     return exists
   }
 
-  _getTagPaths(tags) {
+  _getTagPaths(value) {
+  
     let tagPaths = []
+  
+    let tags = value._tags
 
     if (tags) {
-      for (var tagKey in tags) {
-        let tagValue = tags[tagKey]
-  
+      for (var tagKey of tags) {
+        let tagValue = value[tagKey]
+        // console.log(`${tagKey}/${tagValue}`)
         if (Array.isArray(tagValue)) {
           for (let arrayTagValue of tagValue) {
             tagPaths.push(this._getTagPath(tagKey, arrayTagValue))
@@ -262,7 +265,7 @@ class LazyKvIndex {
         }
       }
     }
-
+    console.log(tagPaths)
     return tagPaths
   }
 

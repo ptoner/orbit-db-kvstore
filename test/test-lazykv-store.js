@@ -69,33 +69,30 @@ describe('LazyKvStore', async () => {
 
         //Arrange 
         await store.put(5, {
+            _tags: ["season", "currentTeam", "battingHand", "throwingHand"],
             name: "Andrew McCutchen",
-            _tags: {
-                season: [2019, 2018, 2017],
-                currentTeam: "PIT",
-                battingHand: "R",
-                throwingHand: "R"
-            }
+            season: [2019, 2018, 2017],
+            currentTeam: "PIT",
+            battingHand: "R",
+            throwingHand: "R"
         })
 
         await store.put(6, {
+            _tags: ["season", "currentTeam", "battingHand", "throwingHand"],
             name: "Pedro Alvarez",
-            _tags: {
-                season: [2019, 2017],
-                currentTeam: "BAL",
-                battingHand: "R",
-                throwingHand: "R"
-            }
+            season: [2019, 2017],
+            currentTeam: "BAL",
+            battingHand: "R",
+            throwingHand: "R"
         })
 
         await store.put(8, {
+            _tags: ["season", "currentTeam", "battingHand", "throwingHand"],
             name: "Jordy Mercer",
-            _tags: {
-                season: [2016],
-                currentTeam: "PIT",
-                battingHand: "L",
-                throwingHand: "R"
-            }
+            season: [2016],
+            currentTeam: "PIT",
+            battingHand: "L",
+            throwingHand: "R"
         })
 
 
