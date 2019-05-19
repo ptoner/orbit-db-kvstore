@@ -1,24 +1,24 @@
 'use strict'
 
 const Store = require('orbit-db-store')
-const LazyKvIndex = require('./LazyKvIndex')
+const TableIndex = require('./TableIndex')
 const Log = require('ipfs-log')
 
 
 
-class LazyKvStore extends Store {
+class TableStore extends Store {
 
   constructor(ipfs, id, dbname, options) {
 
     //Wrap the index in a wrapper to let us pass it the ipfs instance that we get
-    class LazyKvIndexWrapper extends LazyKvIndex {
+    class TableIndexWrapper extends TableIndex {
       constructor() {
-        super(ipfs, dbname)
+        super(ipfs, dbname, options.indexes)
       }
     }
 
 
-    let opts = Object.assign({}, { Index: LazyKvIndexWrapper })
+    let opts = Object.assign({}, { Index: TableIndexWrapper })
     Object.assign(opts, options)
     super(ipfs, id, dbname, opts)
     this._type = 'lazykv'
@@ -62,6 +62,7 @@ class LazyKvStore extends Store {
 
 
   async load (amount) {
+    return this._index.load()
   }
 
 
@@ -69,8 +70,8 @@ class LazyKvStore extends Store {
     return 'lazykv'
   }
 
-  async getByTag(tag, value, limit, offset ) {
-    return this._index.getByTag(tag, value, limit, offset)
+  async getByIndex(tag, value, limit, offset ) {
+    return this._index.getByIndex(tag, value, limit, offset)
   }
 
 
@@ -104,4 +105,4 @@ class LazyKvStore extends Store {
 
 }
 
-module.exports = LazyKvStore
+module.exports = TableStore

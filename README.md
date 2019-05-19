@@ -1,11 +1,13 @@
-# orbit-db-kvstore
+# Orbit-db Space Query Language
 
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/orbitdb/Lobby)
 [![npm version](https://badge.fury.io/js/orbit-db-kvstore.svg)](https://badge.fury.io/js/orbit-db-kvstore)
 
-> Key-Value database for orbit-db
+> An orbit-db datastore that is indexed and searched with a basic SQL-like pattern. 
 
-A key-value database just like your favourite key-value database.
+Define a basic schema. Multiple columns can be indexed. All indexes are implemented as remotely-loaded [B-trees](https://github.com/mmalmi/merkle-btree/). 
+
+Begin searching complex 
 
 Used in [orbit-db](https://github.com/haadcode/orbit-db).
 
