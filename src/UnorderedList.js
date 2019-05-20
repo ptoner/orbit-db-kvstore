@@ -167,7 +167,10 @@ class UnorderedList {
 
         let buffer = Buffer.from(JSON.stringify(list))
         let cid = await this.ipfs.object.put(buffer)
-        return cid.toString()
+
+        this.hash = cid.toString()
+
+        return this.hash
     }
 
 

@@ -29,9 +29,9 @@ describe('TableStore', async () => {
             type: "lazykv",
             indexes: [
                 {column: "_id", primary: true, unique: true},
-                {column: "currentTeam", unique: true},
-                {column: "battingHand", unique: true},
-                {column: "throwingHand",unique: true}
+                {column: "currentTeam", unique: false},
+                {column: "battingHand", unique: false},
+                {column: "throwingHand",unique: false}
             ]
         })
 
@@ -40,7 +40,7 @@ describe('TableStore', async () => {
         await store.load()
     })
 
-    it('Test put/get', async () => {
+    it('should put items in the table and retreive them by _id', async () => {
 
         //Arrange 
         await store.put(1, {
@@ -104,7 +104,7 @@ describe('TableStore', async () => {
         await store.put(8, {
             _id: 8,
             name: "Jordy Mercer",
-            currentTeam: "NYY",
+            currentTeam: "PIT",
             battingHand: "L",
             throwingHand: "R"
         })
@@ -113,8 +113,8 @@ describe('TableStore', async () => {
         await store.put(9, {
             _id: 9,
             name: "Doug Drabek",
-            currentTeam: "NYM",
-            battingHand: "R",
+            currentTeam: "BAL",
+            battingHand: "L",
             throwingHand: "R"
         })
 
@@ -133,18 +133,20 @@ describe('TableStore', async () => {
         assert.equal(teamPIT[1].name, "Jordy Mercer")
 
         assert.equal(teamBAL[0].name, "Pedro Alvarez")
+        assert.equal(teamBAL[1].name, "Doug Drabek")
 
         //Batting
         assert.equal(battingR[0].name, "Andrew McCutchen")
         assert.equal(battingR[1].name, "Pedro Alvarez")
         
         assert.equal(battingL[0].name, "Jordy Mercer")
+        assert.equal(battingL[1].name, "Doug Drabek")
 
         //Pitching
         assert.equal(throwingR[0].name, "Andrew McCutchen")
         assert.equal(throwingR[1].name, "Pedro Alvarez")
         assert.equal(throwingR[2].name, "Jordy Mercer")
-
+        assert.equal(throwingR[3].name, "Doug Drabek")
 
 
     })

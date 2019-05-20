@@ -21,6 +21,17 @@ class IndexDao {
       return this._indexes
     }
   
+    get primary() {
+
+      for (let indexName in this._indexes) {
+        let index = this.get(indexName)
+        if (index.primary) return index
+      }
+
+      return null
+
+    }
+
     async load() {
   
       this._indexes = {} 

@@ -1,7 +1,7 @@
-const IndexDao = require('./IndexDao');
-const btree = require('merkle-btree');
+const IndexDao = require('./IndexDao')
+const btree = require('merkle-btree')
+const { UnorderedList } = require('../src/UnorderedList')
 
-let DEFAULT_INDEX = "_id"
 
 
 class TableIndex {
@@ -91,6 +91,9 @@ class TableIndex {
 
   async put(key, value) {
 
+    let existing = await this.get(key)
+
+
     //Update indexes
     let indexes = this.indexDao.indexes
 
@@ -106,14 +109,46 @@ class TableIndex {
 
       if (indexKey) {
         //The value we store in the btree is the primary key. Except in the primary index. Then it's the full object
-        let indexValue = (indexName == DEFAULT_INDEX ? value : key)  
+        let indexValue = (index.primary ? value : key)  
         
         
         if (index.unique) {
+          
           //If it's a unique index we just put the value in.
           await tree.put(indexKey, indexValue)
+
         } else {
-          //Otherwise we're storing a linked list.
+
+          //Otherwise we're storing a list of values. Append this to it.
+
+          //Figure out if this value is already in a different list inside this index.
+          if (existing) {
+            
+            let existingIndex = existing[indexName]
+            
+            if (existingIndex) {
+  
+              let existingList = await this._getList(tree, existingIndex)
+              
+              await existingList.deleteValue(indexValue)
+              let newHash = await existingList.save()
+  
+              await tree.put(existingIndex, newHash)
+  
+            }
+
+          }
+
+          let list = await this._getList(tree, indexKey)
+          await list.append(indexValue)
+
+
+          //Update the hash
+          let listHash = await list.save()
+
+          await tree.put(indexKey, listHash)
+
+
         }
 
         //Save the tree so we get the new root node hash. Update the existing index with it.
@@ -132,7 +167,8 @@ class TableIndex {
 
 
   async _getPrimaryTree() {
-    return this._getTreeByIndex(DEFAULT_INDEX)
+    let primaryIndex = this.indexDao.primary
+    return this._getTreeByIndex(primaryIndex.column)
   }
 
   async _getTreeByIndex(indexName) {
@@ -149,31 +185,53 @@ class TableIndex {
   }
 
 
-  async getByIndex(index, value, limit, offset ) {
+  async getByIndex(index, value, limit=1, offset=0 ) {
 
-    let results = []
+    const indexInfo = this.indexDao.get(index)
 
     const tree = await this._getTreeByIndex(index)
-
-    // console.log(tree.rootNode.print())
 
     //If there isn't even an index just return an empty array
     if (!tree) {
       return []
     }
 
-    let matches = await tree.get(value)
+    
+    let primaryKeys = []
 
-    let counter = 0
-    for (let match in matches) {
-      
-      if (counter >= offset) {
-        results.push(this.get(match))
+    if (indexInfo.unique) {
+
+      //It'll just be an actual value.
+      let storedValue = await tree.get(value)
+
+      //We don't get a key we get the actual stored object. Return it.
+      if (indexInfo.primary) {
+        return [storedValue]
+      } else {
+        //It's only a primary key
+        primaryKeys.push(storedValue)
       }
+
       
-      if (results.length == limit) break
-      counter++
+    } else {
+
+      let listHash = await tree.get(value)
+
+      //It'll be a hash of a list. 
+      let list = new UnorderedList(this.ipfs)
+      await list.load(listHash)
+
+      primaryKeys = await list.get(offset, limit)
+
     }
+
+
+    let results = []
+    for (let primaryKey of primaryKeys) {
+      results.push(await this.get(primaryKey))
+    }
+
+
 
     return results
 
@@ -188,6 +246,23 @@ class TableIndex {
       console.log(ex)
     }
   }
+
+
+  async _getList(tree, indexKey) {
+
+    let list = new UnorderedList(this.ipfs)
+
+    let existingHash = await tree.get(indexKey)
+
+    if (existingHash) {
+      await list.load(existingHash)
+    } {
+      await list.save()
+    }
+
+    return list
+  }
+
 
 }
 

@@ -30,7 +30,8 @@ describe('IndexDao', async () => {
         //Arrange 
         let index = {
             column: "one",
-            unique: true
+            unique: true,
+            primary: false
         }
 
         //Act
@@ -51,14 +52,16 @@ describe('IndexDao', async () => {
         //Arrange 
         let index = {
             column: "two",
-            unique: true
+            unique: true,
+            primary: false
         }
 
         await indexDao.put("two", index)
         
         let newIndex = {
             column: "two",
-            unique: false
+            unique: false,
+            primary: true
         }
 
         //Act
@@ -68,8 +71,9 @@ describe('IndexDao', async () => {
         //Assert
         let updated = indexDao.get("two")
         
-        assert.equal(updated.column, newIndex.column)
-        assert.equal(updated.unique, newIndex.unique)
+        assert.equal(updated.column, "two")
+        assert.equal(updated.unique, false)
+        assert.equal(updated.primary, true)
 
     })
 
@@ -83,6 +87,17 @@ describe('IndexDao', async () => {
         let created = indexDao.get("one")
         
         assert.equal(created, undefined)
+    })
+
+
+    it('should get me the index marked primary', async () => {
+
+        //Act
+        let primary = indexDao.primary 
+
+
+        //Assert
+        assert.equal(primary.column, "two")
     })
 
 
