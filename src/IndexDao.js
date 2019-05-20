@@ -3,6 +3,7 @@ class IndexDao {
     constructor(ipfs, dbName) {
       this._ipfs = ipfs
       this._indexPath = `${dbName}/indexes`
+      this._indexes = {} 
     }
   
     get(key) {

@@ -60,6 +60,10 @@ class TableStore extends Store {
     return this._index
   }
 
+  async commit() {
+    return this._index.commit()
+  }
+
 
   async load (amount) {
     return this._index.load()

@@ -28,11 +28,24 @@ class TableIndex {
 
 
 
-
+  async commit() {
+    return this.indexDao.save()
+  }
 
   async load() {
-    await this.indexDao.load()
-    await this.updateSchema()
+
+    if (this.indexes) {
+      
+      for (let index of this.indexes) {
+        this.indexDao.put(index.column, index)
+      }
+
+      await this.updateSchema()
+
+    } else {
+      await this.indexDao.load()
+    }
+
   }
 
   async updateSchema() {
@@ -105,62 +118,74 @@ class TableIndex {
       let index = this.indexDao.get(indexName)
 
       //The key is the value of the indexed field. 
-      let indexKey = value[indexName]
+      let indexKey = value ? value[indexName] : null
 
-      if (indexKey) {
-        //The value we store in the btree is the primary key. Except in the primary index. Then it's the full object
-        let indexValue = (index.primary ? value : key)  
+
+      //The value we store in the btree is the primary key. Except in the primary index. Then it's the full object
+      let indexValue = (index.primary ? value : key)  
+      
+      
+      if (index.unique) {
         
-        
-        if (index.unique) {
-          
+        if (indexKey) {
           //If it's a unique index we just put the value in.
           await tree.put(indexKey, indexValue)
-
         } else {
+          await tree.delete(key)
+        }
 
-          //Otherwise we're storing a list of values. Append this to it.
 
-          //Figure out if this value is already in a different list inside this index.
-          if (existing) {
+
+      } else {
+
+        //Otherwise we're storing a list of values. Append this to it.
+
+        //Figure out if this value is already in a different list inside this index.
+        if (existing) {
+          
+          let existingIndex = existing[indexName]
+          
+          if (existingIndex) {
+
+            let existingList = await this._getList(tree, existingIndex)
             
-            let existingIndex = existing[indexName]
-            
-            if (existingIndex) {
-  
-              let existingList = await this._getList(tree, existingIndex)
-              
-              await existingList.deleteValue(indexValue)
-              let newHash = await existingList.save()
-  
-              await tree.put(existingIndex, newHash)
-  
-            }
+            await existingList.deleteValue(indexValue)
+            let newHash = await existingList.save()
+
+            await tree.put(existingIndex, newHash)
 
           }
 
-          let list = await this._getList(tree, indexKey)
-          await list.append(indexValue)
-
-
-          //Update the hash
-          let listHash = await list.save()
-
-          await tree.put(indexKey, listHash)
-
-
         }
 
-        //Save the tree so we get the new root node hash. Update the existing index with it.
-        let existingIndex = this.indexDao.get(indexName)
-        existingIndex.hash = await tree.save() 
+        //If there's an actual value then insert it
+        if (indexKey) {
+          let list = await this._getList(tree, indexKey)
+          await list.append(indexValue)
+  
+  
+          //Update the hash
+          let listHash = await list.save()
+  
+          await tree.put(indexKey, listHash)
+        } else {
+          
+        }
 
-        this.indexDao.put(indexName, existingIndex)
+
+
       }
 
+
+
+
+      //Save the tree so we get the new root node hash. Update the existing index with it.
+      let existingIndex = this.indexDao.get(indexName)
+      existingIndex.hash = await tree.save() 
+
+      this.indexDao.put(indexName, existingIndex)
     }
 
-    await this.indexDao.save()
 
   }
 
