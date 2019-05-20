@@ -8,6 +8,7 @@ class UnorderedList {
         this.ipfs = ipfs
         
         this.tree = null
+        this.hash = null
 
 
         //When merkle-btree was written the ipfs api was slightly different. 
@@ -24,7 +25,6 @@ class UnorderedList {
 
 
         //Fields that get serialized
-
         this.length = 0
         this.treeHash = null
 
@@ -42,7 +42,7 @@ class UnorderedList {
 
         await this.tree.put(this.length-1, value)
 
-        await this.save()
+        this.hash = await this.save()
 
         return this
     }
@@ -70,7 +70,7 @@ class UnorderedList {
 
         this.length--
 
-        await this.save()
+        this.hash = await this.save()
 
        return this
     }
@@ -138,12 +138,17 @@ class UnorderedList {
 
 
     async load(cid) {
+
         let list = await this.ipfs.object.get(cid)
-        let data = JSON.parse(list.data)
+
+        let data = list.data.toString()
+
+        data = JSON.parse(data)
 
         Object.assign(this, data)
 
-        this.tree = btree.MerkleBTree.getByHash(this.treeHash, this.ipfsStorage)
+        this.tree = await btree.MerkleBTree.getByHash(this.treeHash, this.ipfsStorage)
+        this.hash = cid
 
     }
 

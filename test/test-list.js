@@ -160,90 +160,31 @@ it('should append single node to linked list', async () => {
 
 
 
+  it('should save and load from IPFS', async () => {
 
-//   it('should be possible to store objects in the list and to print them out', async () => {
-//     const linkedList = new LinkedList(ipfs)
+    const list = new UnorderedList(ipfs)
+    await list.save()
 
-//     const nodeValue1 = { value: 1, key: 'key1' }
-//     const nodeValue2 = { value: 2, key: 'key2' }
+    await list.append(1)
+    await list.append(1)
+    await list.append(2)
+    await list.append(3)
+    await list.append(3)
+    await list.append(3)
+    await list.append(4)
+    await list.append(5)
 
-//     linkedList
-//       .append(nodeValue1)
-//       .prepend(nodeValue2)
-
-//     const nodeStringifier = value => `${value.key}:${value.value}`
-
-//     expect(linkedList.toString(nodeStringifier)).toBe('key2:2,key1:1')
-//   })
-
-
+    assert.equal(list.hash, "QmPBQBpd2P9WWE2GkbFBLQA9FuRbrHo8KYtA44DgGoYF6M")
 
 
+    const list2 = new UnorderedList(ipfs)
+    await list2.load(list.hash)
 
-//   it('should find node by value', async () => {
-//     const linkedList = new LinkedList(ipfs)
-
-//     expect(linkedList.find({ value: 5 })).toBeNull()
-
-//     linkedList.append(1)
-//     expect(linkedList.find({ value: 1 })).toBeDefined()
-
-//     linkedList
-//       .append(2)
-//       .append(3)
-
-//     const node = linkedList.find({ value: 2 })
-
-//     expect(node.value).toBe(2)
-//     expect(linkedList.find({ value: 5 })).toBeNull()
-//   })
+    assert.equal(await list2.toString(), "1,1,2,3,3,3,4,5")
 
 
 
-
-
-//   it('should find node by callback', async () => {
-//     const linkedList = new LinkedList(ipfs)
-
-//     linkedList
-//       .append({ value: 1, key: 'test1' })
-//       .append({ value: 2, key: 'test2' })
-//       .append({ value: 3, key: 'test3' })
-
-//     const node = linkedList.find({ callback: value => value.key === 'test2' })
-
-//     expect(node).toBeDefined()
-//     expect(node.value.value).toBe(2)
-//     expect(node.value.key).toBe('test2')
-//     expect(linkedList.find({ callback: value => value.key === 'test5' })).toBeNull()
-//   })
-
-
-
-
-
-
-//   it('should save and load nodes from IPFS', async () => {
-
-//     const linkedList = new LinkedList(ipfs)
-
-//     //Arrange
-//     let node = new LinkedListNode("one", "XYZ", "123")
-    
-//     //Act
-//     await linkedList.saveNode(node)
-
-//     //Assert
-//     expect(node.cid).toBe("Qmf7zeXq795miPLzB412tyP5kizR7TDi99WxqAMEcS951z")
-
-//     let loaded = await linkedList.loadNode(node.cid)
-
-//     expect(loaded.value).toBe("one")
-//     expect(loaded.next).toBe("XYZ")
-//     expect(loaded.previous).toBe("123")
-//     expect(loaded.cid).toBe("Qmf7zeXq795miPLzB412tyP5kizR7TDi99WxqAMEcS951z")
-
-//   })
+  })
 
 
 
