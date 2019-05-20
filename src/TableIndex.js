@@ -7,6 +7,7 @@ let DEFAULT_INDEX = "_id"
 class TableIndex {
 
   constructor(ipfs, dbname, indexes) {
+    
     this.ipfs = ipfs
     this.dbname = dbname
     this.indexes = indexes 
