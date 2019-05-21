@@ -71,7 +71,15 @@ class TableStore extends Store {
 
 
   static get type () {
-    return 'lazykv'
+    return 'table'
+  }
+
+
+  /**
+   * Will only work with numeric primary keys for now.
+   */
+  async list(offset=0, limit=1) {
+    return this._index.list(offset, limit)
   }
 
   async getByIndex(tag, value, limit, offset ) {

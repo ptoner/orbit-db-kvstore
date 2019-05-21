@@ -27,7 +27,7 @@ describe('TableStore', async () => {
         let orbitdb = await OrbitDB.createInstance(ipfs)
         store = await orbitdb.open("testlazykv", {
             create: true, 
-            type: "lazykv",
+            type: "table",
             indexes: [
                 {column: "id", primary: true, unique: true},
                 {column: "currentTeam", unique: false},
@@ -117,6 +117,7 @@ describe('TableStore', async () => {
             throwingHand: "R"
         })
 
+    
         //Act
         let teamPIT = await store.getByIndex("currentTeam", "PIT", 100, 0)
         let teamBAL = await store.getByIndex("currentTeam", "BAL", 100, 0)
@@ -158,7 +159,7 @@ describe('TableStore', async () => {
             id: 5,
             name: "Andrew McCutchen",
             currentTeam: "PIT",
-            battingHand: "L",
+            battingHand: "L", //was R
             throwingHand: "R"
         })
 
@@ -212,6 +213,114 @@ describe('TableStore', async () => {
     })
 
 
+
+    it('should get a list full of results', async () => {
+
+        //Act
+        let list = await store.list(0, 10)
+
+
+        //Assert
+        assert.equal(list.length, 6)
+
+    })
+
+
+    it('should add bunch of records and then query them', async () => {
+
+        console.log(`Inserting 100 Andrew McCutchens`)
+
+        for (let i=0; i < 100; i++) {
+            console.log(`${i} of 100`)
+            await store.put(i, {
+                id: i,
+                name: "Andrew McCutchen",
+                currentTeam: "PIT",
+                battingHand: "L",
+                throwingHand: "R"
+            })
+        }
+
+        console.log(`Inserting 100 Jordy Mercers`)
+
+        for (let i=0; i < 100; i++) {
+            console.log(`${i} of 100`)
+            await store.put(i, {
+                id: i,
+                name: "Jordy Mercer",
+                currentTeam: "NYY",
+                battingHand: "R",
+                throwingHand: "L"
+            })
+        }
+
+        console.log(`Inserting 100 Aaron Judge`)
+
+
+        for (let i=0; i < 100; i++) {
+            console.log(`${i} of 100`)
+            await store.put(i, {
+                id: i,
+                name: "Aaron Judge",
+                currentTeam: "NYY",
+                battingHand: "R",
+                throwingHand: "R"
+            })
+        }
+
+        console.log(`Inserting 100 Manny Machado`)
+
+        for (let i=0; i < 100; i++) {
+            console.log(`${i} of 100`)
+            await store.put(i, {
+                id: i,
+                name: "Manny Machado",
+                currentTeam: "BAL",
+                battingHand: "L",
+                throwingHand: "L"
+            })
+        }
+
+
+
+        let cutch = await store.getByIndex("name", "Andrew McCutchen", 1000, 0)
+        let jordy = await store.getByIndex("name", "Jordy Mercer", 1000, 0)
+        let judge = await store.getByIndex("name", "Aaron Judge", 1000, 0)
+        let manny = await store.getByIndex("name", "Manny Machado", 1000, 0)
+
+
+        let pit = await store.getByIndex("currentTeam", "PIT", 1000, 0)
+        let nyy = await store.getByIndex("currentTeam", "NYY", 1000, 0)
+        let bal = await store.getByIndex("currentTeam", "BAL", 1000, 0)
+
+
+        let batsR = await store.getByIndex("battingHand", "R", 1000, 0)
+        let batsL = await store.getByIndex("battingHand", "L", 1000, 0)
+
+        let throwsR = await store.getByIndex("throwingHand", "R", 1000, 0)
+        let throwsL = await store.getByIndex("throwingHand", "L", 1000, 0)
+
+
+        assert.equal(cutch.length, 100)
+        assert.equal(jordy.length, 100)
+        assert.equal(judge.length, 100)
+        assert.equal(manny.length, 100)
+
+        assert.equal(pit.length, 100)
+        assert.equal(nyy.length, 200)
+        assert.equal(bal.length, 100)
+
+        assert.equal(batsR.length, 200)
+        assert.equal(batsL.length, 200)
+
+        assert.equal(throwsR.length, 200)
+        assert.equal(throwsL.length, 200)
+
+
+    })
+
+
+
     it('should save and load from IPFS', async () => {
 
         //Save indexes
@@ -220,7 +329,7 @@ describe('TableStore', async () => {
         //Re-open
         let orbitdb = await OrbitDB.createInstance(ipfs)
         let loadedStore = await orbitdb.open(store.address, {
-            type: "lazykv"
+            type: "table"
         })
 
         await loadedStore.load()

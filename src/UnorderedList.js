@@ -42,8 +42,6 @@ class UnorderedList {
 
         await this.tree.put(this.length-1, value)
 
-        this.hash = await this.save()
-
         return this
     }
 
@@ -69,8 +67,6 @@ class UnorderedList {
         await this.tree.put(index, lastValue)
 
         this.length--
-
-        this.hash = await this.save()
 
        return this
     }

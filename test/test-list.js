@@ -174,6 +174,8 @@ it('should append single node to linked list', async () => {
     await list.append(4)
     await list.append(5)
 
+    await list.save()
+
     assert.equal(list.hash, "QmPBQBpd2P9WWE2GkbFBLQA9FuRbrHo8KYtA44DgGoYF6M")
 
 

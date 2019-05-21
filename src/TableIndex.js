@@ -93,6 +93,8 @@ class TableIndex {
   }
 
   async keys() {
+    let primaryTree = await this._getPrimaryTree()
+    return primaryTree.keys
   }
 
 
@@ -100,6 +102,32 @@ class TableIndex {
     let primaryTree = await this._getPrimaryTree()
     return primaryTree.get(key)
   }
+
+
+  /**
+   * Will only work with numeric primary keys for now.
+   */
+  async list(offset=0, limit=1) {
+
+    let results = []
+
+    let primaryTree = await this._getPrimaryTree()
+
+
+    for (let i=offset; results.length < limit && i < await primaryTree.size(); i++) {
+
+      let value = await primaryTree.get(i)
+
+      if (value) {
+        results.push(value)
+      }
+
+    }
+
+    return results
+
+  }
+
 
 
   async put(key, value) {
@@ -111,6 +139,8 @@ class TableIndex {
     let indexes = this.indexDao.indexes
 
     for (let indexName in indexes) {
+
+      // console.log(`Adding to ${indexName} index`)
 
       const tree = await this._getTreeByIndex(indexName)
 
@@ -128,55 +158,41 @@ class TableIndex {
       if (index.unique) {
         
         if (indexKey) {
-          //If it's a unique index we just put the value in.
+        
+          //If it's a unique index we just put the value in.      
+          // console.log(`Put unique index: ${indexKey}/${indexValue}`)
+
           await tree.put(indexKey, indexValue)
         } else {
+          
+          // console.log(`Delete key from unique index: ${key}`)
+
           await tree.delete(key)
         }
 
-
-
       } else {
 
+        console.time('update list');
+
+
         //Otherwise we're storing a list of values. Append this to it.
+        let isNew = this._isNew(existing, value)
+        let isChanged = this._isChanged(existing, value, indexName) 
 
-        //Figure out if this value is already in a different list inside this index.
-        if (existing) {
-          
-          let existingIndex = existing[indexName]
-          
-          if (existingIndex) {
 
-            let existingList = await this._getList(tree, existingIndex)
-            
-            await existingList.deleteValue(indexValue)
-            let newHash = await existingList.save()
-
-            await tree.put(existingIndex, newHash)
-
-          }
-
+        if (existing && isChanged) {
+          await this._deleteFromIndexList(existing[indexName], key, tree)
         }
 
         //If there's an actual value then insert it
-        if (indexKey) {
-          let list = await this._getList(tree, indexKey)
-          await list.append(indexValue)
-  
-  
-          //Update the hash
-          let listHash = await list.save()
-  
-          await tree.put(indexKey, listHash)
-        } else {
-          
+        if (indexKey && (isChanged || isNew)) {
+          await this._addToIndexList(indexKey, key, tree)
         }
 
+        console.timeEnd('update list');
 
 
       }
-
-
 
 
       //Save the tree so we get the new root node hash. Update the existing index with it.
@@ -188,6 +204,80 @@ class TableIndex {
 
 
   }
+
+
+  async _isNew(existing, value) {
+    return (existing == null && value != null)
+  }
+
+  async _isChanged(existing, value, indexName) {
+
+    let isChanged = false 
+    let isNew = this._isNew(existing, value)
+
+    if (!isNew) {
+      isChanged = (value == null) || (existing[indexName] != value[indexName])
+    }
+
+    return isChanged
+  }
+
+
+  async _deleteFromIndexList(existingIndex, key, tree) {
+    
+    if (!existingIndex) return 
+
+    // console.log(`_deleteFromExistingIndex: ${existingIndex} / ${key}`)
+
+    let list = new UnorderedList(this.ipfs)
+
+    //Get the list if it exists.
+    let existingHash = await tree.get(existingIndex)
+
+    if (existingHash) {
+
+      await list.load(existingHash)
+
+      await list.deleteValue(key)
+  
+      let newHash = await list.save()
+  
+      return tree.put(existingIndex, newHash)  
+
+    } 
+
+  }
+
+  async _addToIndexList(indexKey, key, tree) {
+
+    // console.log(`_addToIndexList: ${indexKey} / ${key}`)
+
+    let list = new UnorderedList(this.ipfs)
+
+    //Get the list if it exists.
+    
+    let existingHash = await tree.get(indexKey)
+    if (existingHash) {
+      await list.load(existingHash)
+    } else {
+      await list.save()
+    }
+    
+
+
+    console.time('append')
+    await list.append(key)
+    console.timeEnd('append')
+
+    //Update the hash
+    console.time('save list');
+    let listHash = await list.save()
+    console.timeEnd('save list');
+
+
+    return tree.put(indexKey, listHash)
+  }
+
 
 
 
@@ -242,18 +332,24 @@ class TableIndex {
 
       let listHash = await tree.get(value)
 
-      //It'll be a hash of a list. 
-      let list = new UnorderedList(this.ipfs)
-      await list.load(listHash)
+      if (listHash) {
+        //It'll be a hash of a list. 
+        let list = new UnorderedList(this.ipfs)
+        await list.load(listHash)
 
-      primaryKeys = await list.get(offset, limit)
+        primaryKeys = await list.get(offset, limit)
+      }
+
+
 
     }
 
 
     let results = []
+    let primaryTree = await this._getPrimaryTree()
     for (let primaryKey of primaryKeys) {
-      results.push(await this.get(primaryKey))
+      let result = await primaryTree.get(primaryKey)
+      results.push(result)
     }
 
 
@@ -261,6 +357,8 @@ class TableIndex {
     return results
 
   }
+
+
 
 
 
@@ -273,20 +371,6 @@ class TableIndex {
   }
 
 
-  async _getList(tree, indexKey) {
-
-    let list = new UnorderedList(this.ipfs)
-
-    let existingHash = await tree.get(indexKey)
-
-    if (existingHash) {
-      await list.load(existingHash)
-    } {
-      await list.save()
-    }
-
-    return list
-  }
 
 
 }
