@@ -1,7 +1,7 @@
 {
   "name": "orbit-db-tablestore",
   "version": "0.0.1",
-  "description": "An orbit-db datastore that is indexed and searched with a basic SQL-like pattern. ",
+  "description": "An orbit-db datastore that can be indexed and searched without downloading the entire dataset",
   "main": "src/TableStore.js",
   "homepage": "https://github.com/ptoner/orbit-db-tablestore",
   "bugs": "https://github.com/ptoner/orbit-db-tablestore/issues",

@@ -40,7 +40,9 @@ class UnorderedList {
 
         this.length++
 
+        // console.time('put in tree')
         await this.tree.put(this.length-1, value)
+        // console.timeEnd('put in tree')
 
         return this
     }

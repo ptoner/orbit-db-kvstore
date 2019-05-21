@@ -158,6 +158,30 @@ it('should append single node to linked list', async () => {
   })
 
 
+  // it('should add a lot of records', async () => {
+
+  //   const list = new UnorderedList(ipfs)
+  //   await list.save()
+
+
+  //   for (let i=0; i < 1000; i++) {
+  //     console.log(`Appending ${i} of 1000`)
+  //     await list.append(i)
+  //   }
+
+  //   await list.save()
+
+  //   assert.equal(list.hash, "QmPBQBpd2P9WWE2GkbFBLQA9FuRbrHo8KYtA44DgGoYF6M")
+
+
+  //   const list2 = new UnorderedList(ipfs)
+  //   await list2.load(list.hash)
+
+  //   assert.equal(await list2.toString(), "1,1,2,3,3,3,4,5")
+
+  // })
+
+
 
 
   it('should save and load from IPFS', async () => {
@@ -183,8 +207,6 @@ it('should append single node to linked list', async () => {
     await list2.load(list.hash)
 
     assert.equal(await list2.toString(), "1,1,2,3,3,3,4,5")
-
-
 
   })
 

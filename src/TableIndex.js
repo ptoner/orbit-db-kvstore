@@ -172,7 +172,7 @@ class TableIndex {
 
       } else {
 
-        console.time('update list');
+        // console.time('update list');
 
 
         //Otherwise we're storing a list of values. Append this to it.
@@ -189,7 +189,7 @@ class TableIndex {
           await this._addToIndexList(indexKey, key, tree)
         }
 
-        console.timeEnd('update list');
+        // console.timeEnd('update list');
 
 
       }
@@ -265,14 +265,14 @@ class TableIndex {
     
 
 
-    console.time('append')
+    // console.time('append')
     await list.append(key)
-    console.timeEnd('append')
+    // console.timeEnd('append')
 
     //Update the hash
-    console.time('save list');
+    // console.time('save list');
     let listHash = await list.save()
-    console.timeEnd('save list');
+    // console.timeEnd('save list');
 
 
     return tree.put(indexKey, listHash)
