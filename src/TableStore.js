@@ -87,8 +87,9 @@ class TableStore extends Store {
   }
 
 
-  async _updateIndex () {
+  async _updateIndex (key, value) {
     this._recalculateReplicationMax()
+    await this._index.put(key, value)
     this._recalculateReplicationProgress()
   }
 
@@ -97,8 +98,7 @@ class TableStore extends Store {
       const entry = await this._oplog.append(data, this.options.referenceCount)
       this._recalculateReplicationStatus(this.replicationStatus.progress + 1, entry.clock.time)
       await this._cache.set('_localHeads', [entry])
-      await this._index.put(data.key, data.value)
-      await this._updateIndex()
+      await this._updateIndex(data.key, data.value)
       this.events.emit('write', this.address.toString(), entry, this._oplog.heads)
       if (onProgressCallback) onProgressCallback(entry)
       return entry.hash
