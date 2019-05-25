@@ -1,4 +1,5 @@
-const btree = require('merkle-btree')
+// const btree = require('merkle-btree')
+const btree = require("btreejs")
 
 
 class UnorderedList {
@@ -9,66 +10,37 @@ class UnorderedList {
         
         this.tree = null
         this.hash = null
-
-
-        //When merkle-btree was written the ipfs api was slightly different. 
-        //I can't figure out how to build that project so I'm fixing it this way.
-        //It's not super great.
-        let updatedIpfs = {}
-        
-        Object.assign(updatedIpfs, ipfs)
-
-        updatedIpfs.files = this.ipfs 
-
-        this.ipfsStorage = new btree.IPFSStorage(updatedIpfs)
-
-
-
-        //Fields that get serialized
-        this.length = 0
-        this.treeHash = null
-
     }
 
 
 
     /**
      * @param {*} value
-     * @return {Promise<UnorderedList>}
+     * @return {UnorderedList}
      */
-    async append(value) {
-
-        this.length++
-
-        // console.time('put in tree')
-        await this.tree.put(this.length-1, value)
-        // console.timeEnd('put in tree')
-
+    append(value) {
+        this.tree.put(this.tree.count(), value)
         return this
     }
 
 
-
     /**
        * @param {*} index
-       * @return {Promise<UnorderedList>}
+       * @return {UnorderedList}
        */
-    async delete(index) {
+    delete(index) {
 
-        if (this.length == 0) return
-
-
-        //Delete what's in that index currently
-        await this.tree.delete(index)
-
+        if (this.tree.count() == 0) return
 
         //Grab the value in the last slot
-        let lastValue = await this.tree.get(this.length-1)
+        let lastIndex = this.tree.count()-1   
+        let lastValue = this.tree.get(lastIndex)
 
+    
         //Move it and overwrite the one we're deleting
-        await this.tree.put(index, lastValue)
+        this.tree.put(index, lastValue)
 
-        this.length--
+        this.tree.del(lastIndex) //Drop the last one
 
        return this
     }
@@ -78,11 +50,11 @@ class UnorderedList {
      * Deletes the first occurrence of the specified value in the list
      * @param {*} value 
      */
-    async deleteValue(value) {
+    deleteValue(value) {
 
-        if (this.length == 0) return
+        if (this.tree.count() == 0) return
 
-        let index = await this.indexOf(value)
+        let index = this.indexOf(value)
 
         return this.delete(index)
     }
@@ -92,10 +64,10 @@ class UnorderedList {
      * Returns the index of the first occurrence of the specified value in this list, or -1 if this list does not contain the value 
      * @param {*} value 
      */
-    async indexOf(value) {
+    indexOf(value) {
 
-        for (let i=0; i < this.length; i++) {
-            let possible = await this.tree.get(i)
+        for (let i=0; i < this.tree.count(); i++) {
+            let possible = this.tree.get(i)
 
             if (possible == value) return i 
 
@@ -106,12 +78,12 @@ class UnorderedList {
     }
 
 
-    async get(index, limit = 1) {
+    get(index, limit = 1) {
 
         let results = []
         
-        for (let i=index; i < this.length && results.length < limit; i++) {
-            let value = await this.tree.get(i)
+        for (let i=index; i < this.tree.count() && results.length < limit; i++) {
+            let value = this.tree.get(i)
             results.push(value)
         }
 
@@ -120,12 +92,12 @@ class UnorderedList {
     }
 
 
-    async toString() {
+    toString() {
 
         let string = ''
 
-        for (let i=0; i < this.length; i++) {
-            let value = await this.tree.get(i)
+        for (let i=0; i < this.tree.count(); i++) {
+            let value = this.tree.get(i)
 
             string += `${value},`
         }
@@ -145,7 +117,19 @@ class UnorderedList {
 
         Object.assign(this, data)
 
-        this.tree = await btree.MerkleBTree.getByHash(this.treeHash, this.ipfsStorage)
+        const Tree = btree.create(2, btree.numcmp)
+        const listTree = new Tree()
+
+        let values = data.tree.split(",")
+
+        let counter=0
+        for (let value of values) {
+            listTree.put(counter, parseInt(value))
+            counter++
+        }
+
+
+        this.tree = listTree
         this.hash = cid
 
     }
@@ -153,14 +137,21 @@ class UnorderedList {
     async save() {
 
         if (!this.tree) {
-            this.tree = new btree.MerkleBTree(this.ipfsStorage)
+            const Tree = btree.create(2, btree.numcmp)
+            this.tree = new Tree()
         }
 
-        this.treeHash = await this.tree.save()
 
+        let treeString = ""
+        for (let i=0; i < this.tree.count(); i++) {
+            treeString += this.tree.get(i) + ","
+        }
+        treeString = treeString.slice(0, -1)
+
+
+        //Serialize
         let list = {
-            treeHash: this.treeHash,
-            length: this.length
+            tree: treeString
         }
 
         let buffer = Buffer.from(JSON.stringify(list))

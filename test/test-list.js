@@ -70,21 +70,21 @@ it('should append single node to linked list', async () => {
 
     //Arrange
     const list = new UnorderedList(ipfs)
-    await list.save()
+    list.save()
 
-    await list.append(50)
-    await list.append(60)
-    await list.append(70)
-    await list.append(80)
+    list.append(50)
+    list.append(60)
+    list.append(70)
+    list.append(80)
 
     //Act
-    await list.delete(2)
+    list.delete(2)
 
     //Assert
-    let _50 = await list.get(0)
-    let _60 = await list.get(1)
-    let _80 = await list.get(2)
-    let _none = await list.get(3)
+    let _50 = list.get(0)
+    let _60 = list.get(1)
+    let _80 = list.get(2)
+    let _none = list.get(3)
 
     assert.equal(_50[0], 50)
     assert.equal(_60[0], 60)
@@ -93,17 +93,17 @@ it('should append single node to linked list', async () => {
 
 
     //Add some more
-    await list.append(90)
-    await list.append(100)
-    await list.append(110)
-    await list.append(120)
+    list.append(90)
+    list.append(100)
+    list.append(110)
+    list.append(120)
 
 
-    await list.delete(4) //100
+    list.delete(4) //100
     
-    let _90 = await list.get(3)
-    let _120 = await list.get(4)
-    let _110 = await list.get(5)
+    let _90 = list.get(3)
+    let _120 = list.get(4)
+    let _110 = list.get(5)
 
     assert.equal(_90[0], 90)
     assert.equal(_120[0], 120)
@@ -111,10 +111,10 @@ it('should append single node to linked list', async () => {
 
 
 
-    await list.delete(3) // 90
+    list.delete(3) // 90
 
-    let _110_2 = await list.get(3)
-    let _120_2 = await list.get(4)
+    let _110_2 = list.get(3)
+    let _120_2 = list.get(4)
 
     assert.equal(_110_2[0], 110)
     assert.equal(_120_2[0], 120)
@@ -125,33 +125,33 @@ it('should append single node to linked list', async () => {
   it('should delete by value from list', async () => {
 
     const list = new UnorderedList(ipfs)
-    await list.save()
+    list.save()
 
-    await list.append(1)
-    await list.append(1)
-    await list.append(2)
-    await list.append(3)
-    await list.append(3)
-    await list.append(3)
-    await list.append(4)
-    await list.append(5)
-
-
-    await list.deleteValue(3)
-    assert.equal(await list.toString(), "1,1,2,5,3,3,4")
-
-    await list.deleteValue(3)
-    assert.equal(await list.toString(), "1,1,2,5,4,3")
-
-    await list.deleteValue(3)
-    assert.equal(await list.toString(), "1,1,2,5,4")
+    list.append(1)
+    list.append(1)
+    list.append(2)
+    list.append(3)
+    list.append(3)
+    list.append(3)
+    list.append(4)
+    list.append(5)
 
 
-    await list.deleteValue(1)
-    assert.equal(await list.toString(), "4,1,2,5")
+    list.deleteValue(3)
+    assert.equal(list.toString(), "1,1,2,5,3,3,4")
 
-    await list.deleteValue(1)
-    assert.equal(await list.toString(), "4,5,2")
+    list.deleteValue(3)
+    assert.equal(list.toString(), "1,1,2,5,4,3")
+
+    list.deleteValue(3)
+    assert.equal(list.toString(), "1,1,2,5,4")
+
+
+    list.deleteValue(1)
+    assert.equal(list.toString(), "4,1,2,5")
+
+    list.deleteValue(1)
+    assert.equal(list.toString(), "4,5,2")
 
 
 
@@ -189,24 +189,24 @@ it('should append single node to linked list', async () => {
     const list = new UnorderedList(ipfs)
     await list.save()
 
-    await list.append(1)
-    await list.append(1)
-    await list.append(2)
-    await list.append(3)
-    await list.append(3)
-    await list.append(3)
-    await list.append(4)
-    await list.append(5)
+    list.append(1)
+    list.append(1)
+    list.append(2)
+    list.append(3)
+    list.append(3)
+    list.append(3)
+    list.append(4)
+    list.append(5)
 
     await list.save()
 
-    assert.equal(list.hash, "QmPBQBpd2P9WWE2GkbFBLQA9FuRbrHo8KYtA44DgGoYF6M")
+    assert.equal(list.hash, "QmatsUiZLAMo7uvhFJDcHBWvgYg4dDnLp17y5hkA3hkFeJ")
 
 
     const list2 = new UnorderedList(ipfs)
     await list2.load(list.hash)
 
-    assert.equal(await list2.toString(), "1,1,2,3,3,3,4,5")
+    assert.equal(list2.toString(), "1,1,2,3,3,3,4,5")
 
   })
 

@@ -30,7 +30,8 @@
     "orbit-db-store": "2.6.1",
     "orbit-db": "file:../orbit-db",
     "ipfs-http-client": "30.1.4",
-    "merkle-btree": "1.0.24"
+    "merkle-btree": "1.0.24",
+    "btreejs": "0.3.0"
   },
   "devDependencies": {
     "expect": "24.8.0",
