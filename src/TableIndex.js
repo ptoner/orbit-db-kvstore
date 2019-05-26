@@ -337,7 +337,7 @@ class TableIndex {
         let list = new UnorderedList(this.ipfs)
         await list.load(listHash)
 
-        primaryKeys = await list.get(offset, limit)
+        primaryKeys = await list.list(offset, limit)
       }
 
 

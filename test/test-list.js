@@ -20,7 +20,7 @@ describe('UnorderedList', () => {
 
 
 
-it('should append single node to linked list', async () => {
+it('should append single node to list', async () => {
 
     //Arrange
     const list = new UnorderedList(ipfs)
@@ -33,7 +33,7 @@ it('should append single node to linked list', async () => {
     //Assert
     let _0 = await list.get(0)
 
-    assert.equal(_0[0], 50)
+    assert.equal(_0, 50)
 
   })
 
@@ -46,21 +46,21 @@ it('should append single node to linked list', async () => {
 
 
     //Act
-    await list.append(50)
-    await list.append(60)
-    await list.append(70)
-    await list.append(80)
+    list.append(50)
+    list.append(60)
+    list.append(70)
+    list.append(80)
 
     //Assert
-    let _50 = await list.get(0)
-    let _60 = await list.get(1)
-    let _70 = await list.get(2)
-    let _80 = await list.get(3)
+    let _50 = list.get(0)
+    let _60 = list.get(1)
+    let _70 = list.get(2)
+    let _80 = list.get(3)
 
-    assert.equal(_50[0], 50)
-    assert.equal(_60[0], 60)
-    assert.equal(_70[0], 70)
-    assert.equal(_80[0], 80)
+    assert.equal(_50, 50)
+    assert.equal(_60, 60)
+    assert.equal(_70, 70)
+    assert.equal(_80, 80)
 
   })
 
@@ -86,10 +86,10 @@ it('should append single node to linked list', async () => {
     let _80 = list.get(2)
     let _none = list.get(3)
 
-    assert.equal(_50[0], 50)
-    assert.equal(_60[0], 60)
-    assert.equal(_80[0], 80)
-    assert.equal(_none[0], undefined)
+    assert.equal(_50, 50)
+    assert.equal(_60, 60)
+    assert.equal(_80, 80)
+    assert.equal(_none, undefined)
 
 
     //Add some more
@@ -105,9 +105,9 @@ it('should append single node to linked list', async () => {
     let _120 = list.get(4)
     let _110 = list.get(5)
 
-    assert.equal(_90[0], 90)
-    assert.equal(_120[0], 120)
-    assert.equal(_110[0], 110)
+    assert.equal(_90, 90)
+    assert.equal(_120, 120)
+    assert.equal(_110, 110)
 
 
 
@@ -116,8 +116,8 @@ it('should append single node to linked list', async () => {
     let _110_2 = list.get(3)
     let _120_2 = list.get(4)
 
-    assert.equal(_110_2[0], 110)
-    assert.equal(_120_2[0], 120)
+    assert.equal(_110_2, 110)
+    assert.equal(_120_2, 120)
 
   })
 
@@ -164,20 +164,21 @@ it('should append single node to linked list', async () => {
   //   await list.save()
 
 
-  //   for (let i=0; i < 1000; i++) {
-  //     console.log(`Appending ${i} of 1000`)
-  //     await list.append(i)
+  //   for (let i=0; i < 10000; i++) {
+  //     console.log(`Appending ${i} of 10000`)
+  //     list.append(i)
   //   }
 
   //   await list.save()
 
-  //   assert.equal(list.hash, "QmPBQBpd2P9WWE2GkbFBLQA9FuRbrHo8KYtA44DgGoYF6M")
+  //   assert.equal(list.hash, "QmPaQM8kSYmPq46r25Z6mZ8MWQJbUFsqUu9EdWHnGCunqB")
 
 
-  //   const list2 = new UnorderedList(ipfs)
-  //   await list2.load(list.hash)
+  //   for (let i=0; i < 10000; i++) {
+  //     console.log(`Getting ${i} of 10000`)
+  //     assert.equal(list.get(i), i)
+  //   }
 
-  //   assert.equal(await list2.toString(), "1,1,2,3,3,3,4,5")
 
   // })
 
@@ -209,35 +210,6 @@ it('should append single node to linked list', async () => {
     assert.equal(list2.toString(), "1,1,2,3,3,3,4,5")
 
   })
-
-
-
-
-
-
-//   it('should save and load the list from IPFS', async () => {
-
-//     const linkedList = new LinkedList(ipfs)
-
-//     //Arrange
-//     linkedList
-//         .append(1)
-//         .append(2)
-//         .append(3)
-//         .append(4)
-
-
-//     //Act
-//     let cid = await linkedList.save()
-
-//     //Assert
-//     expect(node.cid).toBe("Qmf7zeXq795miPLzB412tyP5kizR7TDi99WxqAMEcS951z")
-
-//     let loaded = await linkedList.load(cid.toString())
-
-//     expect(loaded.toString()).toBe('1,2,3,4')
-
-//   })
 
 
 

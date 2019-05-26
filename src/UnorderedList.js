@@ -77,8 +77,7 @@ class UnorderedList {
 
     }
 
-
-    get(index, limit = 1) {
+    list(index, limit = 1) {
 
         let results = []
         
@@ -88,7 +87,10 @@ class UnorderedList {
         }
 
         return results
+    }
 
+    get(index) {
+        return this.tree.get(index)
     }
 
 
@@ -115,7 +117,6 @@ class UnorderedList {
 
         data = JSON.parse(data)
 
-        Object.assign(this, data)
 
         const Tree = btree.create(2, btree.numcmp)
         const listTree = new Tree()
@@ -143,10 +144,17 @@ class UnorderedList {
 
 
         let treeString = ""
-        for (let i=0; i < this.tree.count(); i++) {
-            treeString += this.tree.get(i) + ","
+
+        if (this.tree.count() > 0) {
+            this.tree.walkAsc(function(key, value){
+                treeString += `${value},`
+
+            })
+
+            treeString = treeString.slice(0, -1)
+
         }
-        treeString = treeString.slice(0, -1)
+
 
 
         //Serialize
