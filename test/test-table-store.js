@@ -354,6 +354,48 @@ describe('TableStore', async () => {
         assert.equal(throwsL.length, 198)
 
 
+        //Commit the changes and then check again
+        await store.commit()
+
+
+
+
+        cutch = await store.getByIndex("name", "Andrew McCutchen", 1000, 0)
+        jordy = await store.getByIndex("name", "Jordy Mercer", 1000, 0)
+        judge = await store.getByIndex("name", "Aaron Judge", 1000, 0)
+        manny = await store.getByIndex("name", "Manny Machado", 1000, 0)
+
+
+        pit = await store.getByIndex("currentTeam", "PIT", 1000, 0)
+        nyy = await store.getByIndex("currentTeam", "NYY", 1000, 0)
+        bal = await store.getByIndex("currentTeam", "BAL", 1000, 0)
+
+
+        batsR = await store.getByIndex("battingHand", "R", 1000, 0)
+        batsL = await store.getByIndex("battingHand", "L", 1000, 0)
+
+        throwsR = await store.getByIndex("throwingHand", "R", 1000, 0)
+        throwsL = await store.getByIndex("throwingHand", "L", 1000, 0)
+
+
+        assert.equal(cutch.length, 99)
+        assert.equal(jordy.length, 99)
+        assert.equal(judge.length, 99)
+        assert.equal(manny.length, 99)
+
+        assert.equal(pit.length, 99)
+        assert.equal(nyy.length, 198)
+        assert.equal(bal.length, 99)
+
+        assert.equal(batsR.length, 198)
+        assert.equal(batsL.length, 198)
+
+        assert.equal(throwsR.length, 198)
+        assert.equal(throwsL.length, 198)
+
+
+
+
     })
 
 

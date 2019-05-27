@@ -57,6 +57,27 @@ await store.put(9, {
 * Note: The key and the primary key values should match.
 
 
+Query the table by the primary key
+
+```javascript
+let player = await store.get(9)
+
+console.log(player)
+
+//Prints 
+// {
+//     id: 9,
+//     name: "Doug Drabek",
+//     currentTeam: "BAL",
+//     battingHand: "L",
+//     throwingHand: "R",
+//     someOtherData: "day"
+// }
+
+
+```
+
+
 Query the table by the indexed fields. Returns an array with all matching values.  
 
 ```javascript
