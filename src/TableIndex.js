@@ -17,6 +17,7 @@ class TableIndex {
     this.indexes = indexes 
 
     this.indexDao = new IndexDao(ipfs, dbname)
+    this.listCache = new ListCache()
     this.trees = {}
   }
 
@@ -26,15 +27,35 @@ class TableIndex {
 
     console.log('Commit')
 
+    //Save all of the updated cached lists. This will bring all of the index trees up to date.
+    let updatedIndexes = this.listCache.getUpdatedIndexes()
+
+    for (let updatedIndex of updatedIndexes) {
+
+      let indexTree = await this._getTreeByIndex(updatedIndex)
+      let updatedKeys = this.listCache.getUpdatedKeys(updatedIndex)
+
+      for (let updatedKey of updatedKeys) {
+        let list = this.listCache.get(updatedIndex, updatedKey)
+        await list.save()
+        
+        indexTree.put(updatedKey, list.hash )
+      }
+    }
+
+    
+    //Save all of the index trees.
     for (let key in this.trees) {
       
+      // console.log(`Commiting tree for index: ${key}`)
+
       let tree = this.trees[key]
       await tree.save()
 
       let index = this.indexDao.get(key)
       index.hash = tree.hash
 
-      this.indexDao.put(index)
+      this.indexDao.put(key, index)
 
     }
 
@@ -166,7 +187,7 @@ class TableIndex {
       
       if (index.unique) {
         
-        if (indexKey) {
+        if (indexKey != undefined) {
           tree.put(indexKey, indexValue)  //If it's a unique index we just put the value in.      
         } else {
           tree.del(key)                   // If there isn't a value remove the existing one. 
@@ -174,33 +195,34 @@ class TableIndex {
 
       } else {
 
-        console.time('update list');
+        // console.time('update list');
 
         //Otherwise we're storing a list of values. Append this to it.
-        let isNew = this._isNew(existing, value)
-        let isChanged = this._isChanged(existing, value, indexName) 
+        let isNew = await this._isNew(existing, value)
+        let isChanged = false
 
+        if (!isNew) {
+          isChanged = await this._isChanged(existing, value, indexName) 
+        }
 
-        if (existing && isChanged) {
-          await this._deleteFromIndexList(existing[indexName], key, tree)
+    
+
+        if (existing && existing[indexName] && isChanged) {    
+          let existingHash = tree.get(existing[indexName])
+          await this._deleteFromIndexList(existingHash, indexName, existing[indexName], key)
         }
 
         //If there's an actual value then insert it
         if (indexKey && (isChanged || isNew)) {
-          await this._addToIndexList(indexKey, key, tree)
+          let existingHash = tree.get(indexKey)
+          await this._addToIndexList(existingHash, indexName, indexKey, key)
         }
 
-        console.timeEnd('update list');
+        // console.timeEnd('update list');
 
 
       }
 
-
-      // //Save the tree so we get the new root node hash. Update the existing index with it.
-      // let existingIndex = this.indexDao.get(indexName)
-      // existingIndex.hash = await tree.save() 
-
-      // this.indexDao.put(indexName, existingIndex)
     }
 
 
@@ -213,70 +235,39 @@ class TableIndex {
 
   async _isChanged(existing, value, indexName) {
 
-    let isChanged = false 
-    let isNew = this._isNew(existing, value)
-
-    if (!isNew) {
-      isChanged = (value == null) || (existing[indexName] != value[indexName])
-    }
+    let isChanged = (value == null) || (existing[indexName] != value[indexName])
 
     return isChanged
   }
 
 
-  async _deleteFromIndexList(existingIndex, key, tree) {
+  async _deleteFromIndexList(existingHash, indexName, indexKey, value) {
     
-    if (!existingIndex) return 
+    if (!indexKey) return 
 
     // console.log(`_deleteFromExistingIndex: ${existingIndex} / ${key}`)
 
-    let list = new List(this.ipfs)
+    let cachedList = await this._getFromCache(indexName, indexKey, existingHash)
+    cachedList.deleteValue(value)
 
-    //Get the list if it exists.
-    let existingHash = await tree.get(existingIndex)
 
-    if (existingHash) {
+    this.listCache.put(indexName, indexKey, cachedList)
 
-      await list.load(existingHash)
 
-      await list.deleteValue(key)
-  
-      let newHash = await list.save()
-  
-      return tree.put(existingIndex, newHash)  
-
-    } 
 
   }
 
-  async _addToIndexList(indexKey, key, tree) {
+
+
+  async _addToIndexList(existingHash, indexName, indexKey, value) {
 
     // console.log(`_addToIndexList: ${indexKey} / ${key}`)
 
-    let list = new List(this.ipfs)
+    let cachedList = await this._getFromCache(indexName, indexKey, existingHash)
+    cachedList.append(value)
 
-    //Get the list if it exists.
-    
-    let existingHash = await tree.get(indexKey)
-    if (existingHash) {
-      await list.load(existingHash)
-    } else {
-      await list.save()
-    }
-    
+    this.listCache.put(indexName, indexKey, cachedList)
 
-
-    // console.time('append')
-    await list.append(key)
-    // console.timeEnd('append')
-
-    //Update the hash
-    // console.time('save list');
-    let listHash = await list.save()
-    // console.timeEnd('save list');
-
-
-    return tree.put(indexKey, listHash)
   }
 
 
@@ -284,11 +275,6 @@ class TableIndex {
 
   async _getPrimaryTree() {
     let primaryIndex = this.indexDao.primary
-
-
-
-
-
     return this._getTreeByIndex(primaryIndex.column)
   }
 
@@ -308,21 +294,12 @@ class TableIndex {
       await tree.load(index.hash)
     }
 
-    
-
     this.trees[indexName] = tree 
 
-    return tree
+    return this.trees[indexName]
   } 
 
 
-
-  // async _createTree() {
-  //   let tree = new BTree(this.ipfs)
-  //   await tree.save()
-
-  //   return tree.hash
-  // }
 
 
   async getByIndex(index, value, limit=1, offset=0 ) {
@@ -357,15 +334,9 @@ class TableIndex {
 
       let listHash = await tree.get(value)
 
-      if (listHash) {
-        //It'll be a hash of a list. 
-        let list = new List(this.ipfs)
-        await list.load(listHash)
+      let list = await this._getFromCache(indexInfo.column, value, listHash)
 
-        primaryKeys = await list.list(offset, limit)
-      }
-
-
+      primaryKeys = await list.list(offset, limit)
 
     }
 
@@ -383,6 +354,31 @@ class TableIndex {
 
   }
 
+
+  async _getFromCache(indexName, indexKey, existingHash) {
+
+    let cachedList = this.listCache.get(indexName, indexKey)
+
+    if (!cachedList) {
+      await this._cacheList(existingHash, indexName, indexKey)
+      cachedList = this.listCache.get(indexName, indexKey)
+    }
+    return cachedList
+  }
+
+  async _cacheList(existingHash, indexName, indexKey) {
+
+    let list = new List(this.ipfs)
+
+    //Look it up if it exists
+    if (existingHash) {
+      await list.load(existingHash)
+    }
+
+    //Add to cache
+    this.listCache.put(indexName, indexKey, list)
+
+  }
 
 
 
@@ -402,7 +398,49 @@ class TableIndex {
 
 
 
+class ListCache {
 
+  constructor() {
+    this.cachedLists = {}
+
+    //Key is the indexName and value is an array of updated keys in that index.
+    this.updated = {}
+  }
+
+  put(indexName, key, value) {
+
+    let listKey = `${indexName}-${key}`
+
+    this.cachedLists[listKey] = value
+
+
+    let updatedKeys = this.updated[indexName]
+
+    if (!updatedKeys) updatedKeys = []
+
+    if (!updatedKeys.includes(key)) {
+      updatedKeys.push(key)
+    }
+
+    this.updated[indexName] = updatedKeys
+
+    
+  }
+
+  get(indexName, key) {
+    return this.cachedLists[`${indexName}-${key}`]
+  }  
+
+  getUpdatedKeys(indexName) {
+    return this.updated[indexName]
+  }
+
+  getUpdatedIndexes() {
+    return Object.keys(this.updated)
+  }
+
+
+}
 
 
 

@@ -86,7 +86,7 @@ class List {
 
     async load(cid) {
 
-        console.time("List load")
+        // console.time("List load")
 
         let list = await this.ipfs.object.get(cid)
 
@@ -98,13 +98,13 @@ class List {
         this.values = data.values
         this.hash = cid
 
-        console.timeEnd("List load")
+        // console.timeEnd("List load")
 
     }
 
     async save() {
 
-        console.time("List save")
+        // console.time("List save")
 
         //Serialize
         let list = {
@@ -116,7 +116,7 @@ class List {
 
         this.hash = cid.toString()
 
-        console.timeEnd("List save")
+        // console.timeEnd("List save")
 
         return this.hash
     }
