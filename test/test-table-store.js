@@ -267,8 +267,8 @@ describe('TableStore', async () => {
 
         console.log(`Inserting 100 Andrew McCutchens`)
 
-        for (let i=1; i < 25; i++) {
-            console.log(`${i} of 100`)
+        for (let i=1; i < 100; i++) {
+            console.log(`${i} of 400`)
             await store.put(i, {
                 id: i,
                 name: "Andrew McCutchen",
@@ -280,8 +280,8 @@ describe('TableStore', async () => {
 
         console.log(`Inserting 100 Jordy Mercers`)
 
-        for (let i=1; i < 25; i++) {
-            console.log(`${i} of 100`)
+        for (let i=101; i < 200; i++) {
+            console.log(`${i} of 400`)
             await store.put(i, {
                 id: i,
                 name: "Jordy Mercer",
@@ -294,8 +294,8 @@ describe('TableStore', async () => {
         console.log(`Inserting 100 Aaron Judge`)
 
 
-        for (let i=1; i < 25; i++) {
-            console.log(`${i} of 100`)
+        for (let i=201; i < 300; i++) {
+            console.log(`${i} of 400`)
             await store.put(i, {
                 id: i,
                 name: "Aaron Judge",
@@ -307,8 +307,8 @@ describe('TableStore', async () => {
 
         console.log(`Inserting 100 Manny Machado`)
 
-        for (let i=1; i < 25; i++) {
-            console.log(`${i} of 100`)
+        for (let i=301; i < 400; i++) {
+            console.log(`${i} of 400`)
             await store.put(i, {
                 id: i,
                 name: "Manny Machado",
@@ -338,20 +338,20 @@ describe('TableStore', async () => {
         let throwsL = await store.getByIndex("throwingHand", "L", 1000, 0)
 
 
-        assert.equal(cutch.length, 100)
-        assert.equal(jordy.length, 100)
-        assert.equal(judge.length, 100)
-        assert.equal(manny.length, 100)
+        assert.equal(cutch.length, 99)
+        assert.equal(jordy.length, 99)
+        assert.equal(judge.length, 99)
+        assert.equal(manny.length, 99)
 
-        assert.equal(pit.length, 100)
-        assert.equal(nyy.length, 200)
-        assert.equal(bal.length, 100)
+        assert.equal(pit.length, 99)
+        assert.equal(nyy.length, 198)
+        assert.equal(bal.length, 99)
 
-        assert.equal(batsR.length, 200)
-        assert.equal(batsL.length, 200)
+        assert.equal(batsR.length, 198)
+        assert.equal(batsL.length, 198)
 
-        assert.equal(throwsR.length, 200)
-        assert.equal(throwsL.length, 200)
+        assert.equal(throwsR.length, 198)
+        assert.equal(throwsL.length, 198)
 
 
     })
