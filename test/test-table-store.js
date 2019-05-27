@@ -232,6 +232,7 @@ describe('TableStore', async () => {
 
     //     for (let i=0; i < 100; i++) {
     //         console.log(`${i} of 100`)
+    //         console.time('Total time')
     //         await store.put(i, {
     //             id: i,
     //             name: "Andrew McCutchen",
@@ -239,6 +240,8 @@ describe('TableStore', async () => {
     //             battingHand: "L",
     //             throwingHand: "R"
     //         })
+    //         console.timeEnd('Total time')
+
     //     }
 
     //     console.log(`Inserting 100 Jordy Mercers`)

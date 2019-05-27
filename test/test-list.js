@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-const {UnorderedList} = require('../src/UnorderedList')
+const {List} = require('../src/List')
 var expect = require('expect')
 var assert = require('assert')
 
@@ -16,14 +16,14 @@ const ipfs = ipfsClient({
 
 
 
-describe('UnorderedList', () => {
+describe('List', () => {
 
 
 
 it('should append single node to list', async () => {
 
     //Arrange
-    const list = new UnorderedList(ipfs)
+    const list = new List(ipfs)
     await list.save()
 
 
@@ -41,7 +41,7 @@ it('should append single node to list', async () => {
   it('should append multiple values to list', async () => {
 
     //Arrange
-    const list = new UnorderedList(ipfs)
+    const list = new List(ipfs)
     await list.save()
 
 
@@ -69,7 +69,7 @@ it('should append single node to list', async () => {
   it('should delete values from list by index', async () => {
 
     //Arrange
-    const list = new UnorderedList(ipfs)
+    const list = new List(ipfs)
     list.save()
 
     list.append(50)
@@ -102,8 +102,8 @@ it('should append single node to list', async () => {
     list.delete(4) //100
     
     let _90 = list.get(3)
-    let _120 = list.get(4)
-    let _110 = list.get(5)
+    let _110 = list.get(4)
+    let _120 = list.get(5)
 
     assert.equal(_90, 90)
     assert.equal(_120, 120)
@@ -124,7 +124,7 @@ it('should append single node to list', async () => {
 
   it('should delete by value from list', async () => {
 
-    const list = new UnorderedList(ipfs)
+    const list = new List(ipfs)
     list.save()
 
     list.append(1)
@@ -138,20 +138,20 @@ it('should append single node to list', async () => {
 
 
     list.deleteValue(3)
-    assert.equal(list.toString(), "1,1,2,5,3,3,4")
+    assert.equal(list.toString(), "1,1,2,3,3,4,5")
 
     list.deleteValue(3)
-    assert.equal(list.toString(), "1,1,2,5,4,3")
+    assert.equal(list.toString(), "1,1,2,3,4,5")
 
     list.deleteValue(3)
-    assert.equal(list.toString(), "1,1,2,5,4")
+    assert.equal(list.toString(), "1,1,2,4,5")
 
 
     list.deleteValue(1)
-    assert.equal(list.toString(), "4,1,2,5")
+    assert.equal(list.toString(), "1,2,4,5")
 
     list.deleteValue(1)
-    assert.equal(list.toString(), "4,5,2")
+    assert.equal(list.toString(), "2,4,5")
 
 
 
@@ -187,7 +187,7 @@ it('should append single node to list', async () => {
 
   it('should save and load from IPFS', async () => {
 
-    const list = new UnorderedList(ipfs)
+    const list = new List(ipfs)
     await list.save()
 
     list.append(1)
@@ -201,13 +201,14 @@ it('should append single node to list', async () => {
 
     await list.save()
 
-    assert.equal(list.hash, "QmatsUiZLAMo7uvhFJDcHBWvgYg4dDnLp17y5hkA3hkFeJ")
+    assert.equal(list.hash, "QmQuZKsrusageDyJ4a9fkHGwoub8Et2byukpXH6s3ri2wx")
 
-
-    const list2 = new UnorderedList(ipfs)
+    const list2 = new List(ipfs)
     await list2.load(list.hash)
 
     assert.equal(list2.toString(), "1,1,2,3,3,3,4,5")
+
+    
 
   })
 

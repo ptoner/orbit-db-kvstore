@@ -1,11 +1,13 @@
 const btree = require("btreejs")
 
+const Tree = btree.create(2, btree.numcmp)
 
 class BTree {
 
     constructor(ipfs) {
-        this.tree = null
-        this.ipfs = ipfs 
+        this.ipfs = ipfs         
+        this.tree = new Tree()
+
     }
 
     get(key) {
@@ -16,12 +18,20 @@ class BTree {
         this.tree.put(key, value)
     }
 
+    del(key) {
+        this.tree.del(key)
+    }
+
+    count(minKey, maxKey) {
+        return this.tree.count(minKey, maxKey)
+    }
+
     async save() {
 
-        if (!this.tree) {
-            const Tree = btree.create(2, btree.numcmp)
-            this.tree = new Tree()
-        }
+        // if (!this.tree) {
+        //     const Tree = btree.create(2, btree.numcmp)
+        //     this.tree = new Tree()
+        // }
 
         let values = {}
 
@@ -47,15 +57,11 @@ class BTree {
 
         data = JSON.parse(data)
 
-        const Tree = btree.create(2, btree.numcmp)
-        const listTree = new Tree()
-
         for (let key in data) {
-            listTree.put(key, data[key])
+            this.tree.put(key, data[key])
         }
 
 
-        this.tree = listTree
         this.hash = cid
     }
 
