@@ -222,7 +222,7 @@ describe('TableStore', async () => {
 
 
         //Assert
-        assert.equal(list.length, 6)
+        assert.equal(list.length, 7)
 
     })
 

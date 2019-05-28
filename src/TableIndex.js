@@ -140,20 +140,28 @@ class TableIndex {
 
     let primaryTree = await this._getPrimaryTree()
 
+    let cids = []
 
-    for (let i=offset; results.length < limit && i < await primaryTree.count(); i++) {
-
-      let cid = await primaryTree.get(i)
+    primaryTree.tree.walkAsc(function(key, cid){
 
       if (cid) {
-        let value = await this._getFromIpfs(cid)
-
-        if (value) {
-          results.push(value)
-        }
+        cids.push(cid)
+        if (cids.length >= limit) return true
       }
 
+    }) 
+
+    for (let cid of cids) {
+
+      let value = await this._getFromIpfs(cid)
+
+      if (value) {
+        results.push(value)
+        
+      }
     }
+
+
 
     return results
 
