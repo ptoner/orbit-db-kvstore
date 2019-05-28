@@ -143,10 +143,14 @@ class TableIndex {
 
     for (let i=offset; results.length < limit && i < await primaryTree.count(); i++) {
 
-      let value = await primaryTree.get(i)
+      let cid = await primaryTree.get(i)
 
-      if (value) {
-        results.push(value)
+      if (cid) {
+        let value = await this._getFromIpfs(cid)
+
+        if (value) {
+          results.push(value)
+        }
       }
 
     }
@@ -159,7 +163,7 @@ class TableIndex {
 
   async put(key, value) {
 
-    console.time(`Put key: ${key}`)
+    // console.time(`Put key: ${key}`)
 
 
     let existing = await this.get(key)
@@ -172,7 +176,7 @@ class TableIndex {
       await this._updateIndex(indexName, key, value, existing)
     }
 
-    console.timeEnd(`Put key: ${key}`)
+    // console.timeEnd(`Put key: ${key}`)
 
   }
 
