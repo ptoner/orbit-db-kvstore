@@ -1,10 +1,5 @@
 const IndexDao = require('./IndexDao')
 const BTree = require('./BTree')
-
-const ipfsBtree = require('merkle-btree')
-
-
-
 const { List } = require('./List')
 
 
@@ -20,18 +15,6 @@ class TableIndex {
     this.indexDao = new IndexDao(ipfs, dbname)
     this.listCache = new ListCache()
     this.trees = {}
-
-
-    //When merkle-btree was written the ipfs api was slightly different. 
-    //I can't figure out how to build that project so I'm fixing it this way.
-    //It's not super great.
-    let updatedIpfs = {}
-    
-    Object.assign(updatedIpfs, ipfs)
-
-    updatedIpfs.files = this.ipfs 
-
-    this.ipfsStorage = new ipfsBtree.IPFSStorage(updatedIpfs)
 
   }
 
@@ -143,10 +126,9 @@ class TableIndex {
   }
 
 
-  async get(key) {
-    let primaryTree = await this._getPrimaryTree()
-    return primaryTree.get(key)
-  }
+
+
+
 
 
   /**
@@ -159,7 +141,7 @@ class TableIndex {
     let primaryTree = await this._getPrimaryTree()
 
 
-    for (let i=offset; results.length < limit && i < await primaryTree.size(); i++) {
+    for (let i=offset; results.length < limit && i < await primaryTree.count(); i++) {
 
       let value = await primaryTree.get(i)
 
@@ -177,6 +159,9 @@ class TableIndex {
 
   async put(key, value) {
 
+    console.time(`Put key: ${key}`)
+
+
     let existing = await this.get(key)
 
 
@@ -184,71 +169,85 @@ class TableIndex {
     let indexes = this.indexDao.indexes
 
     for (let indexName in indexes) {
+      await this._updateIndex(indexName, key, value, existing)
+    }
 
-      // console.log(`Adding to ${indexName} index`)
+    console.timeEnd(`Put key: ${key}`)
 
-      const tree = await this._getTreeByIndex(indexName)
-
-      //Look up the full index definition from the DAO
-      let index = this.indexDao.get(indexName)
-
-      //The key is the value of the indexed field. 
-      let indexKey = value ? value[indexName] : null
+  }
 
 
-      //The value we store in the btree is the primary key. Except in the primary index. Then it's the full object
-      let indexValue = (index.primary ? value : key)  
-      
-      
-      if (index.unique) {
-        
-        if (indexKey != undefined) {
-          tree.put(indexKey, indexValue)  //If it's a unique index we just put the value in.      
-        } else {
+  async _updateIndex(indexName, key, value, existing) {
 
-          if (index.primary) {
-            tree.delete(key) //slightly different interface
-          } else {
-            tree.del(key) 
-          }
+    // console.time(`Updating index: ${indexName}`)
 
-                            // If there isn't a value remove the existing one. 
-        }
+    // console.log(`Adding to ${indexName} index`)
 
-      } else {
+    const tree = await this._getTreeByIndex(indexName)
 
-        // console.time('update list');
+    //Look up the full index definition from the DAO
+    let index = this.indexDao.get(indexName)
 
-        //Otherwise we're storing a list of values. Append this to it.
-        let isNew = await this._isNew(existing, value)
-        let isChanged = false
+    //The key is the value of the indexed field. 
+    let indexKey = value ? value[indexName] : null
 
-        if (!isNew) {
-          isChanged = await this._isChanged(existing, value, indexName) 
-        }
 
+     
     
+    
+    if (index.unique) {
+      
+      if (indexKey != undefined) {
 
-        if (existing && existing[indexName] && isChanged) {    
-          let existingHash = tree.get(existing[indexName])
-          await this._deleteFromIndexList(existingHash, indexName, existing[indexName], key)
+        //The value we store in the btree is the primary key. Except in the primary index. Then it's the full object
+        if (index.primary) {
+
+          let buffer = Buffer.from(JSON.stringify(value))
+          let cid = await this.ipfs.object.put(buffer)
+
+          tree.put(indexKey, cid.toString())
+        } else {
+          tree.put(indexKey, key) 
         }
 
-        //If there's an actual value then insert it
-        if (indexKey && (isChanged || isNew)) {
-          let existingHash = tree.get(indexKey)
-          await this._addToIndexList(existingHash, indexName, indexKey, key)
-        }
-
-        // console.timeEnd('update list');
-
-
+             
+      } else {
+        tree.del(key) 
+        // If there isn't a value remove the existing one. 
       }
+
+    } else {
+
+      // console.time('update list');
+
+      //Otherwise we're storing a list of values. Append this to it.
+      let isNew = await this._isNew(existing, value)
+      let isChanged = false
+
+      if (!isNew) {
+        isChanged = await this._isChanged(existing, value, indexName) 
+      }
+
+  
+
+      if (existing && existing[indexName] && isChanged) {    
+        let existingHash = tree.get(existing[indexName])
+        await this._deleteFromIndexList(existingHash, indexName, existing[indexName], key)
+      }
+
+      //If there's an actual value then insert it
+      if (indexKey && (isChanged || isNew)) {
+        let existingHash = tree.get(indexKey)
+        await this._addToIndexList(existingHash, indexName, indexKey, key)
+      }
+
+      // console.timeEnd('update list');
 
     }
 
-
+    // console.timeEnd(`Updating index: ${indexName}`)
   }
+
 
 
   async _isNew(existing, value) {
@@ -296,24 +295,8 @@ class TableIndex {
 
 
   async _getPrimaryTree() {
-
     let primaryIndex = this.indexDao.primary
-
-    //If it's already loaded just return it.
-    if (this.trees[primaryIndex.column]) {
-      return this.trees[primaryIndex.column]
-    }
-
-    let tree
-    if (primaryIndex.hash) {
-      tree = ipfsBtree.MerkleBTree.getByHash(primaryIndex.hash, this.ipfsStorage)
-    } else {
-      tree = new ipfsBtree.MerkleBTree(this.ipfsStorage)      
-    }
-
-    this.trees[primaryIndex.column] = tree
-
-    return tree
+    return this._getTreeByIndex(primaryIndex.column)
     
 
   }
@@ -327,13 +310,6 @@ class TableIndex {
 
 
     let index = this.indexDao.get(indexName)
-
-    //If it's the primary index grab that.
-    if (index.primary) {
-      return this._getPrimaryTree()
-    }
-
-
     let tree = new BTree(this.ipfs)
 
     //Load it if it exists
@@ -347,7 +323,15 @@ class TableIndex {
   } 
 
 
+  async get(key) {
+    let primaryTree = await this._getPrimaryTree()
+    let cid = primaryTree.get(key)
 
+    if (!cid) return
+
+    return await this._getFromIpfs(cid)
+
+  }
 
   async getByIndex(index, value, limit=1, offset=0 ) {
 
@@ -391,7 +375,8 @@ class TableIndex {
     let results = []
     let primaryTree = await this._getPrimaryTree()
     for (let primaryKey of primaryKeys) {
-      let result = await primaryTree.get(primaryKey)
+      let cid = await primaryTree.get(primaryKey)
+      let result = await this._getFromIpfs(cid)
       results.push(result)
     }
 
@@ -427,7 +412,11 @@ class TableIndex {
 
   }
 
-
+  async _getFromIpfs(cid) {
+    let loaded = await this.ipfs.object.get(cid)
+    let value = JSON.parse(loaded.data)
+    return value
+  }
 
 
   async reset() {

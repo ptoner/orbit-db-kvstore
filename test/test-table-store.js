@@ -266,7 +266,6 @@ describe('TableStore', async () => {
       it('should add bunch of records and then query them', async () => {
 
         console.log(`Inserting 100 Andrew McCutchens`)
-
         for (let i=1; i < 100; i++) {
             console.log(`${i} of 400`)
             await store.put(i, {
@@ -279,7 +278,6 @@ describe('TableStore', async () => {
         }
 
         console.log(`Inserting 100 Jordy Mercers`)
-
         for (let i=101; i < 200; i++) {
             console.log(`${i} of 400`)
             await store.put(i, {
@@ -292,8 +290,6 @@ describe('TableStore', async () => {
         }
 
         console.log(`Inserting 100 Aaron Judge`)
-
-
         for (let i=201; i < 300; i++) {
             console.log(`${i} of 400`)
             await store.put(i, {
@@ -306,7 +302,6 @@ describe('TableStore', async () => {
         }
 
         console.log(`Inserting 100 Manny Machado`)
-
         for (let i=301; i < 400; i++) {
             console.log(`${i} of 400`)
             await store.put(i, {
@@ -392,9 +387,6 @@ describe('TableStore', async () => {
 
         assert.equal(throwsR.length, 198)
         assert.equal(throwsL.length, 198)
-
-
-
 
     })
 

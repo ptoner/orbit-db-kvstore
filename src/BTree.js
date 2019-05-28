@@ -28,11 +28,6 @@ class BTree {
 
     async save() {
 
-        // if (!this.tree) {
-        //     const Tree = btree.create(2, btree.numcmp)
-        //     this.tree = new Tree()
-        // }
-
         let values = {}
 
         if (this.tree.count() > 0) {
