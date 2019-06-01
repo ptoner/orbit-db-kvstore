@@ -27,18 +27,28 @@ describe('TableStore', async () => {
         let orbitdb = await OrbitDB.createInstance(ipfs)
         store = await orbitdb.open("testtable", {
             create: true, 
-            type: "table",
-            indexes: [
+            type: "table"
+        })
+
+        
+    })
+
+    it('should create indexes', async () => {
+
+        await store.createIndexes(
+            [
                 {column: "id", primary: true, unique: true},
                 {column: "currentTeam", unique: false},
                 {column: "battingHand", unique: false},
                 {column: "throwingHand",unique: false},
                 {column: "name",unique: false}
             ]
-        })
+        )
 
-        await store.load()
+        // await store.load()
+
     })
+
 
     it('should put items in the table and retreive them by primary key', async () => {
 

@@ -6,28 +6,30 @@ const { List } = require('./List')
 
 class TableIndex {
 
-  constructor(ipfs, dbname, indexes, create) {
+  constructor(ipfs, dbname) {
     
     this.ipfs = ipfs
     this.dbname = dbname
 
     this.indexDao = new IndexDao(ipfs, dbname)
 
-    if (create) {
-      for (let index of indexes) {
-        this.indexDao.put(index.column, index)
-      }
-      this.indexDao.save() //might be an issue?
-    }
-
-    this.indexDao._indexes = indexes
-
     this.listCache = new ListCache()
     this.trees = {}
 
   }
 
+  async createIndexes(indexes) {
 
+    console.time('Creating indexes')
+
+    for (let index of indexes) {
+      this.indexDao.put(index.column, index)
+    }
+
+    await this.indexDao.save()
+
+    console.timeEnd('Creating indexes')
+  }
 
   async commit() {
 
@@ -195,8 +197,6 @@ class TableIndex {
 
     // console.time(`Updating index: ${indexName}`)
 
-    // console.log(`Adding to ${indexName} index`)
-
     const tree = await this._getTreeByIndex(indexName)
 
     //Look up the full index definition from the DAO
@@ -205,9 +205,6 @@ class TableIndex {
     //The key is the value of the indexed field. 
     let indexKey = value ? value[indexName] : null
 
-
-     
-    
     
     if (index.unique) {
       
@@ -232,8 +229,6 @@ class TableIndex {
 
     } else {
 
-      // console.time('update list');
-
       //Otherwise we're storing a list of values. Append this to it.
       let isNew = await this._isNew(existing, value)
       let isChanged = false
@@ -255,9 +250,10 @@ class TableIndex {
         await this._addToIndexList(existingHash, indexName, indexKey, key)
       }
 
-      // console.timeEnd('update list');
-
     }
+
+    //Update reference in cached list
+    this.trees[indexName] = tree
 
     // console.timeEnd(`Updating index: ${indexName}`)
   }

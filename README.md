@@ -49,6 +49,7 @@ const orbitdb = await OrbitDB.createInstance(ipfs)
 
 ```
 
+Creating a table
 
 Create a schema that defines the indexed columns in the table. Multiple columns can be indexed and searched. Each index is implemented as a [B-tree](https://github.com/dcodeIO/btree.js/).
 
@@ -64,18 +65,34 @@ The properties of an index are:
 
 let store = await orbitdb.open("testschema", {
     create: true, 
-    type: "table",
-    indexes: [
+    type: "table"
+})
+
+//Create the indexes. Only needs to be done when creating the schema initially.
+await store.createIndexes(
+    [
         {column: "id", primary: true, unique: true},
         {column: "currentTeam", unique: false},
         {column: "battingHand", unique: false},
-        {column: "throwingHand",unique: false}
+        {column: "throwingHand",unique: false},
+        {column: "name",unique: false}
     ]
+        )
+
+```
+
+
+Loading an existing table
+
+```javascript
+let store = await orbitdb.open(ADDRESS_OF_DATASTORE, {
+    type: "table"
 })
 
 await store.load()
 
 ```
+
 
 
 Insert JSON objects into the table. These objects can contain the indexed fields as well as any other properties you want to save with the object. 
@@ -168,8 +185,7 @@ Todo: There should be an auto-commit option somewhere.
 
 ```javascript
 await store.commit()
-
-``
+```
 
 
 
