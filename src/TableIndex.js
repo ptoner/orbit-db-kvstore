@@ -307,6 +307,7 @@ class TableIndex {
 
 
   async _getPrimaryTree() {
+    //TODO: If this returns null we should throw an exception
     let primaryIndex = this.indexDao.primary
     return this._getTreeByIndex(primaryIndex.column)
     

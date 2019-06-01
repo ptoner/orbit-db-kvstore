@@ -1,17 +1,82 @@
 # orbit-db-tablestore
 
-> An orbit-db datastore that can be indexed and searched without downloading the entire dataset. Allows the creation of SQL-like tables. Access using ipfs-http-client. 
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/orbitdb/Lobby)
+[![npm version](https://badge.fury.io/js/orbit-db-tablestore.svg)](https://badge.fury.io/js/orbit-db-tablestore)
 
-1. Create a schema that defines the indexed columns in the table. Multiple columns can be indexed and searched. Each index is implemented as a remotely-loaded [B-tree](https://github.com/mmalmi/merkle-btree/).
+> An indexed and remoted loaded datastore for orbit-db. Indexed fields are searchable and sortable.  
 
-```javascript
-    {column: "id", primary: true, unique: true},
-    {column: "currentTeam", unique: false},
-    {column: "battingHand", unique: false},
-    {column: "throwingHand",unique: false}
+An orbit-db datastore that can be indexed and searched without downloading the entire dataset. Allows the creation of SQL-like tables. Access using ipfs-http-client. 
+
+Used in [orbit-db](https://github.com/haadcode/orbit-db).
+
+
+## Table of Contents
+
+- [Install](#install)
+- [Usage](#usage)
+- [License](#license)
+
+
+
+## Install
+```sh
+npm install orbit-db
+npm install orbit-db-tablestore
+npm install ipfs-http-client
 ```
 
-2. Insert JSON objects into the table. These objects can contain fields other than the ones that were indexed. 
+## Usage
+
+First, create an instance of OrbitDB:
+
+```javascript
+const ipfsClient = require('ipfs-http-client')
+const OrbitDB = require('orbit-db')
+const TableStore = require('orbit-db-tablestore')
+
+
+const ipfs = ipfsClient({
+    host: "localhost",
+    port: 5001,
+    protocol: 'http'
+  })
+
+OrbitDB.addDatabaseType(TableStore.type, TableStore)
+
+const orbitdb = await OrbitDB.createInstance(ipfs)
+
+```
+
+
+Create a schema that defines the indexed columns in the table. Multiple columns can be indexed and searched. Each index is implemented as a remotely-loaded [B-tree](https://github.com/mmalmi/merkle-btree/).
+
+The properties of an index are:
+
+* column - This is the name of the column
+* primary - This designates a column as the primary key. There should only be one.
+* unique - Whether the column has unique values. 
+
+```javascript
+
+/** Put in an async function **/
+
+let store = await orbitdb.open("testschema", {
+    create: true, 
+    type: "table",
+    indexes: [
+        {column: "id", primary: true, unique: true},
+        {column: "currentTeam", unique: false},
+        {column: "battingHand", unique: false},
+        {column: "throwingHand",unique: false}
+    ]
+})
+
+await store.load()
+
+```
+
+
+Insert JSON objects into the table. These objects can contain the indexed fields as well as any other properties you want to save with the object. 
      
 
 ```javascript
@@ -96,70 +161,10 @@ let throwingR = await store.getByIndex("throwingHand", "R", 100, 0)
 
 
 
+## License
 
-## Install
+[MIT](LICENSE) 
 
-This project uses [npm](http://npmjs.com/) and [nodejs](https://nodejs.org/).
-
-
-```sh
-$ npm install orbit-db-tablestore
-```
-
-## Usage
-
-
-Creating a table
-
-```javascript
-
-const OrbitDB = require('orbit-db')
-const ipfsClient = require('ipfs-http-client')
-const TableStore = require('orbit-db-tablestore')
-
-
-/** Put in an async function **/
-
-OrbitDB.addDatabaseType(TableStore.type, TableStore)
-
-let orbitdb = await OrbitDB.createInstance(ipfs)
-let store = await orbitdb.open("testlazykv", {
-    create: true, 
-    type: "table",
-    indexes: [
-        {column: "id", primary: true, unique: true},
-        {column: "currentTeam", unique: false},
-        {column: "battingHand", unique: false},
-        {column: "throwingHand",unique: false}
-    ]
-})
-
-await store.load()
-
-```
-
-Accessing an existing table via its ci. 
-
-```javascript
-
-let orbitdb = await OrbitDB.createInstance(ipfs)
-let loadedStore = await orbitdb.open(store.address, {
-    type: "table"
-})
-
-await loadedStore.load()
-
-```
-
-A table will keep the list of its most recent indexes in memory while the app runs. When you want to flush them to
-IPFS use commit()
-
-
-```javascript
-
-await store.commit()
-
-```
 
 
 
