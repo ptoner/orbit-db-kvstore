@@ -72,50 +72,99 @@ class TableIndex {
 
   }
 
+
+  async count() {
+    let primaryTree = await this._getPrimaryTree()
+
+    return primaryTree.count()
+  }
+
+
+
+
+  async put(key, value) {
+
+    let existing = await this.get(key)
+
+    //Update indexes
+    let indexes = this.indexDao.indexes
+
+    for (let indexName in indexes) {
+      await this._updateIndex(indexName, key, value, existing)
+    }
+
+  }
+
+
+  async get(key) {
+    let primaryTree = await this._getPrimaryTree()
+    let cid = primaryTree.get(key)
+
+    if (!cid) return
+
+    return await this._getFromIpfs(cid)
+
+  }
+
+  async getByIndex(index, value, limit=1, offset=0 ) {
+
+    const indexInfo = this.indexDao.get(index)
+
+    const tree = await this._getTreeByIndex(index)
+
+    //If there isn't even an index just return an empty array
+    if (!tree) {
+      return []
+    }
+
+    
+    let primaryKeys = []
+
+    if (indexInfo.unique) {
+
+      //It'll just be an actual value.
+      let storedValue = await tree.get(value)
+
+      //We don't get a key we get the actual stored object. Return it.
+      if (indexInfo.primary) {
+        return [storedValue]
+      } else {
+        //It's only a primary key
+        primaryKeys.push(storedValue)
+      }
+
+      
+    } else {
+
+      let listHash = await tree.get(value)
+
+      let list = await this._getFromCache(indexInfo.column, value, listHash)
+
+      primaryKeys = await list.list(offset, limit)
+
+    }
+
+
+    let results = []
+    let primaryTree = await this._getPrimaryTree()
+    for (let primaryKey of primaryKeys) {
+      let cid = await primaryTree.get(primaryKey)
+      let result = await this._getFromIpfs(cid)
+      results.push(result)
+    }
+
+
+
+    return results
+
+  }
+
+
+
   async load() {
     return this.indexDao.load()
   }
 
-  // async updateSchema() {
-
-  //   console.time(`'${this.dbname}' schema updated`)
-
-  //   //Find new ones and create them.
-  //   for (let index of this.indexes) {
-
-  //     let existingIndex = this.indexDao.get(index)
-
-  //     if (!existingIndex) {
-  //       // index.hash = await this._createTree()
-  //       this.indexDao.put(index.column, index)
-  //     }
-
-  //   }
-
-  //   //Delete unused ones
-  //   for (let index in this.indexDao.indexes) {
-
-  //     //Check in the new list for it.
-  //     let exists = false
-  //     for (let newIndex of this.indexes) {
-  //       if (index == newIndex.column ) {
-  //         exists = true
-  //         break 
-  //       }
-  //     }
-
-
-  //     if (!exists) {
-  //       this.indexDao.delete(index)
-  //     }
-
-  //   }
-
-  //   await this.indexDao.save()
-
-  //   console.timeEnd(`'${this.dbname}' schema updated`)
-
-  // }
 
 
   async index() {
@@ -172,25 +221,6 @@ class TableIndex {
   }
 
 
-
-  async put(key, value) {
-
-    // console.time(`Put key: ${key}`)
-
-
-    let existing = await this.get(key)
-
-
-    //Update indexes
-    let indexes = this.indexDao.indexes
-
-    for (let indexName in indexes) {
-      await this._updateIndex(indexName, key, value, existing)
-    }
-
-    // console.timeEnd(`Put key: ${key}`)
-
-  }
 
 
   async _updateIndex(indexName, key, value, existing) {
@@ -334,69 +364,7 @@ class TableIndex {
   } 
 
 
-  async get(key) {
-    let primaryTree = await this._getPrimaryTree()
-    let cid = primaryTree.get(key)
-
-    if (!cid) return
-
-    return await this._getFromIpfs(cid)
-
-  }
-
-  async getByIndex(index, value, limit=1, offset=0 ) {
-
-    const indexInfo = this.indexDao.get(index)
-
-    const tree = await this._getTreeByIndex(index)
-
-    //If there isn't even an index just return an empty array
-    if (!tree) {
-      return []
-    }
-
-    
-    let primaryKeys = []
-
-    if (indexInfo.unique) {
-
-      //It'll just be an actual value.
-      let storedValue = await tree.get(value)
-
-      //We don't get a key we get the actual stored object. Return it.
-      if (indexInfo.primary) {
-        return [storedValue]
-      } else {
-        //It's only a primary key
-        primaryKeys.push(storedValue)
-      }
-
-      
-    } else {
-
-      let listHash = await tree.get(value)
-
-      let list = await this._getFromCache(indexInfo.column, value, listHash)
-
-      primaryKeys = await list.list(offset, limit)
-
-    }
-
-
-    let results = []
-    let primaryTree = await this._getPrimaryTree()
-    for (let primaryKey of primaryKeys) {
-      let cid = await primaryTree.get(primaryKey)
-      let result = await this._getFromIpfs(cid)
-      results.push(result)
-    }
-
-
-
-    return results
-
-  }
-
+  
 
   async _getFromCache(indexName, indexKey, existingHash) {
 

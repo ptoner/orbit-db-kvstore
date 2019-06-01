@@ -238,6 +238,15 @@ describe('TableStore', async () => {
 
 
 
+    it('should count the records in the table', async () => {
+
+        let count = await store.count()
+
+        assert.equal(count, 7)
+
+    })
+
+
     it('should save and load from IPFS', async () => {
 
         //Save indexes

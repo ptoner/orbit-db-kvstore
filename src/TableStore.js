@@ -79,6 +79,9 @@ class TableStore extends Store {
     return this._index.createIndexes(indexes)
   }
 
+  async count() {
+    return this._index.count()
+  }
 
   /**
    * Will only work with numeric primary keys for now.

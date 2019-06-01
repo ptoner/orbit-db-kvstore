@@ -177,6 +177,13 @@ let throwingR = await store.getByIndex("throwingHand", "R", 100, 0)
 ```
 
 
+Count the records
+```javascript
+let count = await store.count()
+```
+
+
+
 Commit your changes. 
 
 Your changes are persisted to disk when you call commit(). Before commit() the store will respond with the old data when queried. Multiple calls to "put" can be made inside the same transaction. 
