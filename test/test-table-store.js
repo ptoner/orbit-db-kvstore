@@ -25,7 +25,7 @@ describe('TableStore', async () => {
     before('Setup', async () => {
 
         let orbitdb = await OrbitDB.createInstance(ipfs)
-        store = await orbitdb.open("testlazykv", {
+        store = await orbitdb.open("testtable", {
             create: true, 
             type: "table",
             indexes: [

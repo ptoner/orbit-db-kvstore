@@ -6,13 +6,22 @@ const { List } = require('./List')
 
 class TableIndex {
 
-  constructor(ipfs, dbname, indexes) {
+  constructor(ipfs, dbname, indexes, create) {
     
     this.ipfs = ipfs
     this.dbname = dbname
-    this.indexes = indexes 
 
     this.indexDao = new IndexDao(ipfs, dbname)
+
+    if (create) {
+      for (let index of indexes) {
+        this.indexDao.put(index.column, index)
+      }
+      this.indexDao.save() //might be an issue?
+    }
+
+    this.indexDao._indexes = indexes
+
     this.listCache = new ListCache()
     this.trees = {}
 
@@ -55,63 +64,56 @@ class TableIndex {
 
     }
 
+    await this.indexDao.save()
+
     console.timeEnd('Commit')
 
-    return this.indexDao.save()
   }
 
   async load() {
-
-    if (this.indexes) {
-      
-      for (let index of this.indexes) {
-        this.indexDao.put(index.column, index)
-      }
-
-      await this.updateSchema()
-
-    } else {
-      await this.indexDao.load()
-    }
-
+    return this.indexDao.load()
   }
 
-  async updateSchema() {
+  // async updateSchema() {
 
-    //Find new ones and create them.
-    for (let index of this.indexes) {
+  //   console.time(`'${this.dbname}' schema updated`)
 
-      let existingIndex = this.indexDao.get(index)
+  //   //Find new ones and create them.
+  //   for (let index of this.indexes) {
 
-      if (!existingIndex) {
-        // index.hash = await this._createTree()
-        this.indexDao.put(index.column, index)
-      }
+  //     let existingIndex = this.indexDao.get(index)
 
-    }
+  //     if (!existingIndex) {
+  //       // index.hash = await this._createTree()
+  //       this.indexDao.put(index.column, index)
+  //     }
 
-    //Delete unused ones
-    for (let index in this.indexDao.indexes) {
+  //   }
 
-      //Check in the new list for it.
-      let exists = false
-      for (let newIndex of this.indexes) {
-        if (index == newIndex.column ) {
-          exists = true
-          break 
-        }
-      }
+  //   //Delete unused ones
+  //   for (let index in this.indexDao.indexes) {
+
+  //     //Check in the new list for it.
+  //     let exists = false
+  //     for (let newIndex of this.indexes) {
+  //       if (index == newIndex.column ) {
+  //         exists = true
+  //         break 
+  //       }
+  //     }
 
 
-      if (!exists) {
-        this.indexDao.delete(index)
-      }
+  //     if (!exists) {
+  //       this.indexDao.delete(index)
+  //     }
 
-    }
+  //   }
 
-    await this.indexDao.save()
+  //   await this.indexDao.save()
 
-  }
+  //   console.timeEnd(`'${this.dbname}' schema updated`)
+
+  // }
 
 
   async index() {

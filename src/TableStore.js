@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict'
 
 const Store = require('orbit-db-store')
@@ -13,7 +14,7 @@ class TableStore extends Store {
     //Wrap the index in a wrapper to let us pass it the ipfs instance that we get
     class TableIndexWrapper extends TableIndex {
       constructor() {
-        super(ipfs, dbname, options.indexes)
+        super(ipfs, dbname, options.indexes, options.create)
       }
     }
  
