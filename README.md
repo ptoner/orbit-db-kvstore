@@ -7,6 +7,8 @@
 
 An orbit-db datastore that can be indexed and searched without downloading the entire dataset. Allows the creation of SQL-like tables. Access using ipfs-http-client. 
 
+The goal is to be able to load and search large datasets quickly in a browser. 
+
 Used in [orbit-db](https://github.com/haadcode/orbit-db).
 
 
@@ -158,6 +160,16 @@ let throwingR = await store.getByIndex("throwingHand", "R", 100, 0)
 ```
 
 
+Commit your changes. 
+
+Your changes are persisted to disk when you call commit(). 
+
+Todo: There should be an auto-commit option somewhere.
+
+```javascript
+await store.commit()
+
+``
 
 
 
