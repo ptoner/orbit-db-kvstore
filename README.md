@@ -48,7 +48,7 @@ const orbitdb = await OrbitDB.createInstance(ipfs)
 ```
 
 
-Create a schema that defines the indexed columns in the table. Multiple columns can be indexed and searched. Each index is implemented as a remotely-loaded [B-tree](https://github.com/mmalmi/merkle-btree/).
+Create a schema that defines the indexed columns in the table. Multiple columns can be indexed and searched. Each index is implemented as a [B-tree](https://github.com/dcodeIO/btree.js/).
 
 The properties of an index are:
 
