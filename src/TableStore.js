@@ -16,12 +16,12 @@ class TableStore extends Store {
         super(ipfs, dbname, options.indexes)
       }
     }
-
+ 
 
     let opts = Object.assign({}, { Index: TableIndexWrapper })
     Object.assign(opts, options)
     super(ipfs, id, dbname, opts)
-    this._type = 'lazykv'
+    this._type = 'table'
   }
 
   get all () {
