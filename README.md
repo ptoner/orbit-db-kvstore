@@ -95,7 +95,7 @@ await store.load()
 
 
 
-Insert JSON objects into the table. These objects can contain the indexed fields as well as any other properties you want to save with the object. 
+Insert JSON objects into the table. 
      
 
 ```javascript
@@ -104,17 +104,14 @@ Insert JSON objects into the table. These objects can contain the indexed fields
     name: "Andrew McCutchen",
     currentTeam: "PIT",
     battingHand: "R",
-    throwingHand: "R",
-    someOtherData: "Hello!"
-})
+    throwingHand: "R"
 
 await store.put(6, {
     id: 6,
     name: "Pedro Alvarez",
     currentTeam: "BAL",
     battingHand: "R",
-    throwingHand: "R",
-    someOtherData: "What a"
+    throwingHand: "R"
 })
 
 await store.put(8, {
@@ -122,8 +119,7 @@ await store.put(8, {
     name: "Jordy Mercer",
     currentTeam: "PIT",
     battingHand: "L",
-    throwingHand: "R",
-    someOtherData: "nice"
+    throwingHand: "R"
 })
 
 
@@ -132,8 +128,7 @@ await store.put(9, {
     name: "Doug Drabek",
     currentTeam: "BAL",
     battingHand: "L",
-    throwingHand: "R",
-    someOtherData: "day"
+    throwingHand: "R"
 })
 
 ```
@@ -157,9 +152,17 @@ console.log(player)
 //     throwingHand: "R",
 //     someOtherData: "day"
 // }
+```
 
+Query the full list. Takes an offset and a limit as parameters
+
+```javascript
+
+let list = await store.list(0, 10) //offset 0, limit 10
 
 ```
+
+
 
 
 Query the table by the indexed fields. Returns an array with all matching values.  

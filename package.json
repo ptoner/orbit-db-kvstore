@@ -31,7 +31,8 @@
     "orbit-db": "file:../orbit-db",
     "ipfs-http-client": "30.1.4",
     "merkle-btree": "1.0.24",
-    "btreejs": "0.3.0"
+    "btreejs": "0.3.0",
+    "slow-json-stringify": "0.2.1"
   },
   "devDependencies": {
     "expect": "24.8.0",

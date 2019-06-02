@@ -195,7 +195,13 @@ class TableIndex {
 
     let cids = []
 
+    let skipped=0
     primaryTree.tree.walkAsc(function(key, cid){
+
+      if (skipped < offset) {
+        skipped++
+        return 
+      }
 
       if (cid) {
         cids.push(cid)
