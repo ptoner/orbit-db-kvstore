@@ -49,40 +49,64 @@ const orbitdb = await OrbitDB.createInstance(ipfs)
 
 ```
 
-Creating a table
+### Creating a table
 
-Create a schema that defines the indexed columns in the table. Multiple columns can be indexed and searched. Each index is implemented as a [B-tree](https://github.com/dcodeIO/btree.js/).
+Each table starts with a schema definition. Creating a schema defines the fields and indexes that will be created in the table. Multiple columns can be indexed and searched. Each index is implemented as a [B-tree](https://github.com/dcodeIO/btree.js/).
 
 The properties of an index are:
 
-* column - This is the name of the column
 * primary - This designates a column as the primary key. There should only be one.
+* type  - The data type the column will hold. Supported values are 'string', 'number', and 'boolean'
 * unique - Whether the column has unique values. 
+
+
+To create a table we'll start by creating a JS class that has a static getter named 'constraints'. It should also contain matching properties for every contraint defined. 
+
+```javascript 
+class Player {
+
+    static get constraints() {
+        return {
+            id: { primary: true, unique:true, type: 'number' },
+            name: { unique: false, type: 'string' },
+            currentTeam: { unique: false, type: 'string' },
+            battingHand: { unique: false, type: 'string' },
+            throwingHand: { unique: false, type: 'string' }
+        }
+    }
+
+    constructor() {
+        this.id = null
+        this.name = null
+        this.currentTeam = null
+        this.battingHand = null
+        this.throwingHand = null
+    }
+    
+}
+```
+
+
+
 
 ```javascript
 
 /** Put in an async function **/
 
-let store = await orbitdb.open("testschema", {
+let table = await orbitdb.open("testschema", {
     create: true, 
     type: "table"
 })
 
-//Create the indexes. Only needs to be done when creating the schema initially.
-await store.createIndexes(
-    [
-        {column: "id", primary: true, unique: true},
-        {column: "currentTeam", unique: false},
-        {column: "battingHand", unique: false},
-        {column: "throwingHand",unique: false},
-        {column: "name",unique: false}
-    ]
-        )
+
+//Create the schema. Only needs to be done when creating the table initially. 
+await table.createSchema(Player)
 
 ```
 
 
-Loading an existing table
+### Loading an existing table
+
 
 ```javascript
 let store = await orbitdb.open(ADDRESS_OF_DATASTORE, {
@@ -95,18 +119,18 @@ await store.load()
 
 
 
-Insert JSON objects into the table. 
+### Insert JSON objects into the table. 
      
 
 ```javascript
- await store.put(5, {
+ await table.put(5, {
     id: 5,
     name: "Andrew McCutchen",
     currentTeam: "PIT",
     battingHand: "R",
     throwingHand: "R"
 
-await store.put(6, {
+await table.put(6, {
     id: 6,
     name: "Pedro Alvarez",
     currentTeam: "BAL",
@@ -114,7 +138,7 @@ await store.put(6, {
     throwingHand: "R"
 })
 
-await store.put(8, {
+await table.put(8, {
     id: 8,
     name: "Jordy Mercer",
     currentTeam: "PIT",
@@ -123,7 +147,7 @@ await store.put(8, {
 })
 
 
-await store.put(9, {
+await table.put(9, {
     id: 9,
     name: "Doug Drabek",
     currentTeam: "BAL",
@@ -136,10 +160,10 @@ await store.put(9, {
 * Note: The key and the primary key values should match.
 
 
-Query the table by the primary key
+### Query the table by the primary key
 
 ```javascript
-let player = await store.get(9)
+let player = await table.get(9)
 
 console.log(player)
 
@@ -154,50 +178,44 @@ console.log(player)
 // }
 ```
 
-Query the full list. Takes an offset and a limit as parameters
+### Query the full list. Takes an offset and a limit as parameters
 
 ```javascript
 
-let list = await store.list(0, 10) //offset 0, limit 10
+let list = await table.list(0, 10) //offset 0, limit 10
 
 ```
 
 
-
-
-Query the table by the indexed fields. Returns an array with all matching values.  
+### Query the table by the indexed fields. Returns an array with all matching values.  
 
 ```javascript
 
-let teamPIT = await store.getByIndex("currentTeam", "PIT", 100, 0) //100 is the limit and 0 is the offset
-let teamBAL = await store.getByIndex("currentTeam", "BAL", 100, 0)
+let teamPIT = await table.getByIndex("currentTeam", "PIT", 100, 0) //100 is the limit and 0 is the offset
+let teamBAL = await table.getByIndex("currentTeam", "BAL", 100, 0)
 
-let battingR = await store.getByIndex("battingHand", "R", 100, 0)
-let battingL = await store.getByIndex("battingHand", "L", 100, 0)
+let battingR = await table.getByIndex("battingHand", "R", 100, 0)
+let battingL = await table.getByIndex("battingHand", "L", 100, 0)
 
-let throwingR = await store.getByIndex("throwingHand", "R", 100, 0)    
+let throwingR = await table.getByIndex("throwingHand", "R", 100, 0)    
 
 ```
 
 
-Count the records
+### Count the records
 ```javascript
-let count = await store.count()
+let count = await table.count()
 ```
 
-
-
-Commit your changes. 
+### Commit your changes. 
 
 Your changes are persisted to disk when you call commit(). Before commit() the store will respond with the old data when queried. Multiple calls to "put" can be made inside the same transaction. 
 
 Todo: There should be an auto-commit option somewhere.
 
 ```javascript
-await store.commit()
+await table.commit()
 ```
-
-
 
 ## License
 

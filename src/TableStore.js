@@ -75,8 +75,8 @@ class TableStore extends Store {
     return 'table'
   }
 
-  async createIndexes(indexes) {
-    return this._index.createIndexes(indexes)
+  async createSchema(DTO) {
+    return this._index.createSchema(DTO)
   }
 
   async count() {

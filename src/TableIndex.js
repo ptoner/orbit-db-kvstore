@@ -1,6 +1,10 @@
+// @ts-nocheck
 const IndexDao = require('./IndexDao')
 const BTree = require('./BTree')
 const { List } = require('./List')
+
+const { sjs } = require('slow-json-stringify');
+
 
 
 
@@ -16,20 +20,70 @@ class TableIndex {
     this.listCache = new ListCache()
     this.trees = {}
 
+
+
+
+
   }
 
-  async createIndexes(indexes) {
 
-    console.time('Creating indexes')
 
-    for (let index of indexes) {
-      this.indexDao.put(index.column, index)
+
+
+
+
+
+  async createSchema(DTO) {
+
+    console.time('Creating schema')
+
+    let constraints = DTO.constraints
+
+    for (let key in constraints) {
+
+      constraints[key].column = key //make sure the column property gets saved
+
+      this.indexDao.put(key, constraints[key])
     }
 
+    //Load the stringifier
+    this.stringify = this._getStringifier()
+
+    //Save to disk
     await this.indexDao.save()
 
-    console.timeEnd('Creating indexes')
+    console.timeEnd('Creating schema')
   }
+
+
+  async load() {
+
+    await this.indexDao.load()
+
+    //Load the stringifier
+    this.stringify = this._getStringifier()
+
+  }
+
+
+  _getStringifier() {
+
+    let formatter = {}
+
+    for (let column in this.indexDao.indexes) {
+      let index = this.indexDao.get(column)
+      formatter[column] = index.type 
+    }
+
+    // Parser definition
+    return sjs(formatter);
+  }
+
+
+
+
+
+
 
   async commit() {
 
@@ -161,9 +215,7 @@ class TableIndex {
 
 
 
-  async load() {
-    return this.indexDao.load()
-  }
+
 
 
 
@@ -249,7 +301,8 @@ class TableIndex {
         //The value we store in the btree is the primary key. Except in the primary index. Then it's the full object
         if (index.primary) {
 
-          let buffer = Buffer.from(JSON.stringify(value))
+          let buffer = Buffer.from(this.stringify(value))
+
           let cid = await this.ipfs.object.put(buffer)
 
           tree.put(indexKey, cid.toString())
