@@ -20,18 +20,7 @@ class TableIndex {
     this.listCache = new ListCache()
     this.trees = {}
 
-
-
-
-
   }
-
-
-
-
-
-
-
 
   async createSchema(DTO) {
 
@@ -55,7 +44,6 @@ class TableIndex {
     console.timeEnd('Creating schema')
   }
 
-
   async load() {
 
     await this.indexDao.load()
@@ -65,31 +53,12 @@ class TableIndex {
 
   }
 
-
-  _getStringifier() {
-
-    let formatter = {}
-
-    for (let column in this.indexDao.indexes) {
-      let index = this.indexDao.get(column)
-      formatter[column] = index.type 
-    }
-
-    // Parser definition
-    return sjs(formatter);
-  }
-
-
-
-
-
-
-
   async commit() {
 
     console.time('Commit')
 
     //Save all of the updated cached lists. This will bring all of the index trees up to date.
+    console.time('Save lists')
     let updatedIndexes = this.listCache.getUpdatedIndexes()
 
     for (let updatedIndex of updatedIndexes) {
@@ -104,9 +73,10 @@ class TableIndex {
         indexTree.put(updatedKey, list.hash )
       }
     }
-
+    console.timeEnd('Save lists')
     
     //Save all of the index trees.
+    console.time('Save trees')
     for (let key in this.trees) {
       
       // console.log(`Commiting tree for index: ${key}`)
@@ -119,6 +89,9 @@ class TableIndex {
       this.indexDao.put(key, indexInfo)
 
     }
+    console.timeEnd('Save trees')
+
+
 
     await this.indexDao.save()
 
@@ -126,15 +99,11 @@ class TableIndex {
 
   }
 
-
   async count() {
     let primaryTree = await this._getPrimaryTree()
-
-    return primaryTree.count()
+    let count = await primaryTree.count()
+    return count - 1 //not really sure why I need to do this. I think there's a blank key'd record for some reason.
   }
-
-
-
 
   async put(key, value) {
 
@@ -149,16 +118,16 @@ class TableIndex {
 
   }
 
-
   async get(key) {
     let primaryTree = await this._getPrimaryTree()
-    let cid = primaryTree.get(key)
+    let cid = await primaryTree.get(key)
 
     if (!cid) return
 
-    return await this._getFromIpfs(cid)
+    return this._getFromIpfs(cid)
 
   }
+
 
   async getByIndex(index, value, limit=1, offset=0 ) {
 
@@ -214,8 +183,55 @@ class TableIndex {
   }
 
 
+  async getByCriteria(criteria, limit, offset) {
 
 
+
+
+  }
+
+
+  // /**
+  //  * Will only work with numeric primary keys for now.
+  //  */
+  // async list(offset=0, limit=1) {
+
+  //   let results = []
+
+  //   let primaryTree = await this._getPrimaryTree()
+
+  //   let cids = []
+
+  //   let skipped=0
+  //   primaryTree.tree.walkAsc(function(key, cid){
+
+  //     if (skipped < offset) {
+  //       skipped++
+  //       return 
+  //     }
+
+  //     if (cid) {
+  //       cids.push(cid)
+  //       if (cids.length >= limit) return true
+  //     }
+
+  //   }) 
+
+  //   for (let cid of cids) {
+
+  //     let value = await this._getFromIpfs(cid)
+
+  //     if (value) {
+  //       results.push(value)
+        
+  //     }
+  //   }
+
+
+
+  //   return results
+
+  // }
 
 
 
@@ -231,52 +247,6 @@ class TableIndex {
   }
 
 
-
-
-
-
-
-  /**
-   * Will only work with numeric primary keys for now.
-   */
-  async list(offset=0, limit=1) {
-
-    let results = []
-
-    let primaryTree = await this._getPrimaryTree()
-
-    let cids = []
-
-    let skipped=0
-    primaryTree.tree.walkAsc(function(key, cid){
-
-      if (skipped < offset) {
-        skipped++
-        return 
-      }
-
-      if (cid) {
-        cids.push(cid)
-        if (cids.length >= limit) return true
-      }
-
-    }) 
-
-    for (let cid of cids) {
-
-      let value = await this._getFromIpfs(cid)
-
-      if (value) {
-        results.push(value)
-        
-      }
-    }
-
-
-
-    return results
-
-  }
 
 
 
@@ -302,16 +272,19 @@ class TableIndex {
         if (index.primary) {
 
           let buffer = Buffer.from(this.stringify(value))
-
           let cid = await this.ipfs.object.put(buffer)
 
           tree.put(indexKey, cid.toString())
+
         } else {
+
           tree.put(indexKey, key) 
+
         }
 
              
       } else {
+
         tree.del(key) 
         // If there isn't a value remove the existing one. 
       }
@@ -329,13 +302,13 @@ class TableIndex {
   
 
       if (existing && existing[indexName] && isChanged) {    
-        let existingHash = tree.get(existing[indexName])
+        let existingHash = await tree.get(existing[indexName])
         await this._deleteFromIndexList(existingHash, indexName, existing[indexName], key)
       }
 
       //If there's an actual value then insert it
       if (indexKey && (isChanged || isNew)) {
-        let existingHash = tree.get(indexKey)
+        let existingHash = await tree.get(indexKey)
         await this._addToIndexList(existingHash, indexName, indexKey, key)
       }
 
@@ -347,8 +320,6 @@ class TableIndex {
     // console.timeEnd(`Updating index: ${indexName}`)
   }
 
-
-
   async _isNew(existing, value) {
     return (existing == null && value != null)
   }
@@ -359,7 +330,6 @@ class TableIndex {
 
     return isChanged
   }
-
 
   async _deleteFromIndexList(existingHash, indexName, indexKey, value) {
     
@@ -377,8 +347,6 @@ class TableIndex {
 
   }
 
-
-
   async _addToIndexList(existingHash, indexName, indexKey, value) {
 
     // console.log(`_addToIndexList: ${indexKey} / ${key}`)
@@ -389,9 +357,6 @@ class TableIndex {
     this.listCache.put(indexName, indexKey, cachedList)
 
   }
-
-
-
 
   async _getPrimaryTree() {
     //TODO: If this returns null we should throw an exception
@@ -422,9 +387,6 @@ class TableIndex {
     return this.trees[indexName]
   } 
 
-
-  
-
   async _getFromCache(indexName, indexKey, existingHash) {
 
     let cachedList = this.listCache.get(indexName, indexKey)
@@ -454,6 +416,19 @@ class TableIndex {
     let loaded = await this.ipfs.object.get(cid)
     let value = JSON.parse(loaded.data)
     return value
+  }
+
+  _getStringifier() {
+
+    let formatter = {}
+
+    for (let column in this.indexDao.indexes) {
+      let index = this.indexDao.get(column)
+      formatter[column] = index.type 
+    }
+
+    // Parser definition
+    return sjs(formatter);
   }
 
 

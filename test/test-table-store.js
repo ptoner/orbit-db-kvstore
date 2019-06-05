@@ -250,16 +250,16 @@ describe('TableStore', async () => {
 
 
 
-    it('should get a list full of results', async () => {
+    // it('should get a list full of results', async () => {
 
-        //Act
-        let list = await store.list(0, 10)
+    //     //Act
+    //     let list = await store.list(0, 10)
 
 
-        //Assert
-        assert.equal(list.length, 7)
+    //     //Assert
+    //     assert.equal(list.length, 7)
 
-    })
+    // })
 
 
 
@@ -305,13 +305,11 @@ describe('TableStore', async () => {
     
 
 
-
-
       it('should add bunch of records and then query them', async () => {
 
         console.log(`Inserting 100 Andrew McCutchens`)
         for (let i=1; i < 1000; i++) {
-            console.log(`${i} of 400`)
+            console.log(`${i} of 4000`)
             await store.put(i, {
                 id: i,
                 name: "Andrew McCutchen",
@@ -319,11 +317,18 @@ describe('TableStore', async () => {
                 battingHand: "L",
                 throwingHand: "R"
             })
+
+            if (i%25==0) {
+                await store.commit()
+            }
+            
         }
+
+        
 
         console.log(`Inserting 100 Jordy Mercers`)
         for (let i=1001; i < 2000; i++) {
-            console.log(`${i} of 400`)
+            console.log(`${i} of 4000`)
             await store.put(i, {
                 id: i,
                 name: "Jordy Mercer",
@@ -331,11 +336,17 @@ describe('TableStore', async () => {
                 battingHand: "R",
                 throwingHand: "L"
             })
+
+            if (i%25==0) {
+                await store.commit()
+            }
+            
         }
+
 
         console.log(`Inserting 100 Aaron Judge`)
         for (let i=2001; i < 3000; i++) {
-            console.log(`${i} of 400`)
+            console.log(`${i} of 4000`)
             await store.put(i, {
                 id: i,
                 name: "Aaron Judge",
@@ -343,11 +354,16 @@ describe('TableStore', async () => {
                 battingHand: "R",
                 throwingHand: "R"
             })
+
+            if (i%25==0) {
+                await store.commit()
+            }
+            
         }
 
         console.log(`Inserting 100 Manny Machado`)
         for (let i=3001; i < 4000; i++) {
-            console.log(`${i} of 400`)
+            console.log(`${i} of 4000`)
             await store.put(i, {
                 id: i,
                 name: "Manny Machado",
@@ -355,8 +371,12 @@ describe('TableStore', async () => {
                 battingHand: "L",
                 throwingHand: "L"
             })
-        }
 
+            if (i%25==0) {
+                await store.commit()
+            }
+            
+        }
 
 
         let cutch = await store.getByIndex("name", "Andrew McCutchen", 1000, 0)

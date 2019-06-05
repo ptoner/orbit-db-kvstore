@@ -28,15 +28,15 @@ describe('BTree', () => {
 
     await tree.save()
 
-    assert.equal(tree.hash, "QmWwdNqCsGubQBZULJ4Do458GXUvPbjqWdmJajD2uSQCgU")
+    assert.equal(tree.hash, "QmcFPMwUWMEnrsqEScAy9pLhesDQauDcjvdYugDi24GkhZ")
 
 
     const tree2 = new BTree(ipfs)
     await tree2.load(tree.hash)
 
-    let party = tree2.get("cat")
-    let carnival = tree2.get("horse")
-    let bueno = tree2.get("taco")
+    let party = await tree2.get("cat")
+    let carnival = await tree2.get("horse")
+    let bueno = await tree2.get("taco")
 
     assert.equal(party, "party")
     assert.equal(carnival, "carnival")

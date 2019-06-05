@@ -94,6 +94,10 @@ class TableStore extends Store {
     return this._index.getByIndex(tag, value, limit, offset)
   }
 
+  async getByCriteria(criteria, limit, offset) {
+    return this._index.getByCriteria(criteria, limit, offset)
+  }
+
 
   async _updateIndex (key, value) {
     this._recalculateReplicationMax()

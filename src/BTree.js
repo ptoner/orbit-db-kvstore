@@ -1,13 +1,27 @@
-const btree = require("btreejs")
+// const btree = require("btreejs")
+const btree = require('merkle-btree')
 
-
-const Tree = btree.create(2, btree.numcmp)
+// const Tree = btree.create(2, btree.numcmp)
 
 class BTree {
 
     constructor(ipfs) {
         this.ipfs = ipfs         
-        this.tree = new Tree()
+        
+
+        //When merkle-btree was written the ipfs api was slightly different. 
+        //I can't figure out how to build that project so I'm fixing it this way.
+        //It's not super great.
+        let updatedIpfs = {}
+        
+        Object.assign(updatedIpfs, ipfs)
+
+        updatedIpfs.files = this.ipfs 
+
+        this.ipfsStorage = new btree.IPFSStorage(updatedIpfs)
+
+
+        this.tree = new btree.MerkleBTree(this.ipfsStorage, 64)
 
     }
 
@@ -20,42 +34,45 @@ class BTree {
     }
 
     del(key) {
-        this.tree.del(key)
+        this.tree.delete(key)
     }
 
     count(minKey, maxKey) {
-        return this.tree.count(minKey, maxKey)
+        return this.tree.size()
     }
 
     async save() {
 
-        let values = {}
+        // let values = {}
 
-        if (this.tree.count() > 0) {
-            this.tree.walkDesc(function(key, value){
-                values[key] = value
-            })
-        }
+        // if (this.tree.count() > 0) {
+        //     this.tree.walkDesc(function(key, value){
+        //         values[key] = value
+        //     })
+        // }
 
-        let buffer = Buffer.from(JSON.stringify(values))
-        let cid = await this.ipfs.object.put(buffer)
+        // let buffer = Buffer.from(JSON.stringify(values))
+        // let cid = await this.ipfs.object.put(buffer)
 
-        this.hash = cid.toString()
+        this.hash = await this.tree.save()
 
         return this.hash
     }
 
     async load(cid) {
         
-        let loaded = await this.ipfs.object.get(cid)
+        this.tree = await btree.MerkleBTree.getByHash(cid, this.ipfsStorage, 64)
+        
 
-        let data = loaded.data.toString()
+        // let loaded = await this.ipfs.object.get(cid)
 
-        data = JSON.parse(data)
+        // let data = loaded.data.toString()
 
-        for (let key in data) {
-            this.tree.put(key, data[key])
-        }
+        // data = JSON.parse(data)
+
+        // for (let key in data) {
+        //     this.tree.put(key, data[key])
+        // }
 
 
         this.hash = cid
