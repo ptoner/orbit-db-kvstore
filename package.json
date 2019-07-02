@@ -1,6 +1,6 @@
 {
   "name": "orbit-db-tablestore",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "An orbit-db datastore that can be indexed and searched without downloading the entire dataset",
   "main": "src/TableStore.js",
   "homepage": "https://github.com/ptoner/orbit-db-tablestore",
@@ -28,7 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "orbit-db-store": "2.6.1",
-    "orbit-db": "file:../orbit-db",
+    "orbit-db": "0.21.3",
     "ipfs-http-client": "30.1.4",
     "merkle-btree": "1.0.24",
     "btreejs": "0.3.0",
