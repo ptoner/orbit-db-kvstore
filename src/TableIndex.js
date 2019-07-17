@@ -191,49 +191,6 @@ class TableIndex {
   }
 
 
-  // /**
-  //  * Will only work with numeric primary keys for now.
-  //  */
-  // async list(offset=0, limit=1) {
-
-  //   let results = []
-
-  //   let primaryTree = await this._getPrimaryTree()
-
-  //   let cids = []
-
-  //   let skipped=0
-  //   primaryTree.tree.walkAsc(function(key, cid){
-
-  //     if (skipped < offset) {
-  //       skipped++
-  //       return 
-  //     }
-
-  //     if (cid) {
-  //       cids.push(cid)
-  //       if (cids.length >= limit) return true
-  //     }
-
-  //   }) 
-
-  //   for (let cid of cids) {
-
-  //     let value = await this._getFromIpfs(cid)
-
-  //     if (value) {
-  //       results.push(value)
-        
-  //     }
-  //   }
-
-
-
-  //   return results
-
-  // }
-
-
 
   async index() {
     //This is being called sometimes and I'm not sure why. Don't want to load the whole database.
@@ -414,11 +371,7 @@ class TableIndex {
 
   async _getFromIpfs(cid) {
     let loaded = await this.ipfs.object.get(cid)
-
-    let content = loaded.Data.toString()
-
-    let value = JSON.parse(content)
-
+    let value = JSON.parse(loaded.data)
     return value
   }
 
