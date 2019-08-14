@@ -51,7 +51,7 @@ const orbitdb = await OrbitDB.createInstance(ipfs)
 
 ### Creating a table
 
-Each table starts with a schema definition. Creating a schema defines the fields and indexes that will be created in the table. Multiple columns can be indexed and searched. Each index is implemented as a [B-tree](https://github.com/dcodeIO/btree.js/).
+Each table starts with a schema definition. Creating a schema defines the fields and indexes that will be created in the table. Multiple columns can be indexed and searched. Each index is implemented as a [B-tree](https://github.com/mmalmi/merkle-btree).
 
 The properties of an index are:
 
