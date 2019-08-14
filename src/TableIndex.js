@@ -371,7 +371,17 @@ class TableIndex {
 
   async _getFromIpfs(cid) {
     let loaded = await this.ipfs.object.get(cid)
-    let value = JSON.parse(loaded.data)
+
+    let data 
+
+    if (loaded.data) {
+      data = loaded.data
+    } else if (loaded.Data) {
+      data = loaded.Data
+    }
+
+
+    let value = JSON.parse(data)
     return value
   }
 
