@@ -58,7 +58,7 @@ class TableStore extends Store {
   }
 
   get keys() {
-    return this._index
+    return this._index.keys()
   }
 
   async commit() {
